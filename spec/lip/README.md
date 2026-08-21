@@ -3,7 +3,7 @@
 > The core protocol for intent-driven agent interaction
 
 **Status**: Draft  
-**Protocol version**: 0.1.0  
+**Protocol version**: 0.2.0  
 **Last updated**: 2026-08
 
 > **Normative sources.** This document, §4.1 of the
@@ -394,6 +394,8 @@ an implementation that needs a new one needs an RFC.
 
 | Type | Direction | Effect on the interaction |
 |------|-----------|---------------------------|
+| `register` | Agent → Coordinator | Declares an agent and the capabilities it offers. Sent on every connection, before anything else |
+| `registered` | Coordinator → Agent | Accepts or refuses that declaration, with a reason |
 | `intent` | Requester → Coordinator | Articulates an objective; **instantiates** the interaction context |
 | `offer` | Agent → Coordinator, Coordinator → Requester | Declares a capability relevant to the intent. From the coordinator it carries the full composed execution plan for approval |
 | `accept` | Requester → Coordinator, Coordinator → Requester | Signals agreement; **stabilises** the context |
@@ -408,9 +410,56 @@ Note that `reject` is not an error type. A rejection carrying a
 SHOULD attempt a further negotiation round incorporating it. See
 [§11](#11-error-handling).
 
+`register` and `registered` do not belong to an interaction context, so
+their `session_id` is empty. Every other performative carries the session it
+acts on.
+
 Every message is wrapped in the envelope defined above, and the payload of
 each type is specified by its
 [JSON Schema](https://github.com/draiven-io/agentic-bus/tree/main/schemas).
+
+### Agent Admission
+
+An agent joins a bus by sending `register` and waiting for `registered`.
+Registration is **per connection**, not per process: a coordinator holds its
+capability registry against the live socket, so an agent that reconnects MUST
+register again — one that does not is connected but undiscoverable.
+
+```
+Agent                               Coordinator
+  │                                      │
+  │  register (capabilities, mode)       │
+  │ ────────────────────────────────────►│
+  │                                      │ admission decision
+  │  registered (accepted | reason)      │
+  │ ◄────────────────────────────────────│
+  │                                      │
+  │            … intent / offer / execute …
+```
+
+Agents:
+
+- MUST send `register` as the first message on every connection.
+- SHOULD wait for `registered` before considering themselves live.
+- MUST NOT treat a missing `registered` as fatal — a coordinator implementing
+  0.1.0 never sends one. Agents SHOULD warn.
+- SHOULD surface a refusal. A refusal MAY be transient (an agent awaiting
+  approval becomes valid once approved), so agents MAY stay connected and
+  retry on the next reconnection.
+
+Coordinators:
+
+- MUST answer every `register` with `registered`, including on failure — an
+  agent waiting on that answer would otherwise wait indefinitely.
+- MAY accept an agent while declining individual capabilities, reporting what
+  was accepted in `registered_capabilities`.
+- SHOULD still accept the deprecated pre-0.2.0 form (`complete` with
+  `session_id="__registration__"`), logging a deprecation warning.
+
+> **Before 0.2.0**, agents registered by sending `complete` with
+> `session_id="__registration__"`. That form was never described here, so an
+> agent written from this document alone would connect and never be
+> discovered. See [RFC 0001](../../rfcs/0001-register-performative.md).
 
 ---
 
@@ -489,8 +538,30 @@ Implementations:
   they do not recognise. This is what makes minor additions safe.
 
 Ignoring an unknown `event` message is always safe by construction; ignoring
-an unknown performative is not, which is why new performatives are a major
-change.
+an unknown performative is not.
+
+### Compatibility is not always symmetric
+
+A minor version can still constrain the order in which peers are upgraded.
+`register` (0.2.0) is the worked example:
+
+| Agent | Coordinator | Result |
+|-------|-------------|--------|
+| 0.2.0 | 0.2.0 | Full handshake |
+| 0.1.0 | 0.2.0 | Works — the deprecated form is still accepted |
+| 0.2.0 | 0.1.0 | **Agent never registers** — the coordinator ignores `register` |
+
+**Upgrade coordinators before agents.** A specification that adds a
+performative one side must understand SHOULD state the upgrade ordering
+explicitly, rather than leaving implementers to discover it.
+
+### Reading an unversioned message
+
+An envelope with no `protocol_version` MUST be read as `0.1.0` — the last
+version predating the field. Implementations MUST NOT substitute their own
+current version, which would read a legacy peer's message as whatever version
+the implementation happens to be, and is precisely the misreading the field
+exists to prevent.
 
 ---
 
