@@ -3,8 +3,16 @@
 > The core protocol for intent-driven agent interaction
 
 **Status**: Draft  
-**Version**: 0.1.0  
-**Last Updated**: 2024-12
+**Protocol version**: 0.1.0  
+**Last updated**: 2026-08
+
+> **Normative sources.** This document, §4.1 of the
+> [paper](https://arxiv.org/abs/2601.21993), and the
+> [reference implementation](https://github.com/draiven-io/agentic-bus)
+> describe one protocol. Where prose and schema disagree, the
+> [generated JSON Schemas](https://github.com/draiven-io/agentic-bus/tree/main/schemas)
+> are authoritative — they are produced from the implementation's models, so
+> they cannot drift from what actually goes over the wire.
 
 ---
 
@@ -30,6 +38,7 @@ Unlike traditional integration protocols that specify endpoints, contracts, and 
 10. [Message Envelope](#10-message-envelope)
 11. [Error Handling](#11-error-handling)
 12. [Security Considerations](#12-security-considerations)
+13. [Protocol Versioning](#13-protocol-versioning)
 
 ---
 
@@ -109,7 +118,7 @@ The protocol describes a **relational choreography**, not a fixed sequence of fu
        │ ─────────────────────────────►                     │
        │                                                    │
        │                    ┌───────────────┐               │
-       │                    │ Semantic Bus  │               │
+       │                    │  Coordinator  │               │
        │                    └───────┬───────┘               │
        │                            │                       │
        │         2. Match & Route   │                       │
@@ -193,25 +202,37 @@ LIP institutionalizes **dialogue as a technical principle**.
 
 ### Message Intentionality Structure
 
+An intent therefore carries more than a goal string. Purpose, semantic
+horizon and normative context travel in the intent payload's `context`, and
+they are what [IBAC](../ibac/README.md) evaluates:
+
 ```json
 {
-  "message": {
-    "type": "intent_request",
-    "purpose": {
-      "declared": "Generate quarterly compliance report",
-      "category": "regulatory_compliance"
+  "message_type": "intent",
+  "payload": {
+    "intent_text": "Generate the quarterly compliance report",
+    "context": {
+      "purpose": {
+        "declared": "Generate quarterly compliance report",
+        "category": "regulatory_compliance"
+      },
+      "semantic_horizon": {
+        "domain": "financial_reporting",
+        "ontology_refs": ["fin-onto:quarterly-report"]
+      },
+      "normative_context": {
+        "policies": ["data-export-restrictions", "pii-handling"],
+        "compliance_frameworks": ["SOX", "GDPR"]
+      }
     },
-    "semantic_horizon": {
-      "domain": "financial_reporting",
-      "ontology_refs": ["fin-onto:quarterly-report"]
-    },
-    "normative_context": {
-      "policies": ["data-export-restrictions", "pii-handling"],
-      "compliance_frameworks": ["SOX", "GDPR"]
-    }
+    "ibac_claims_requested": ["finance:read", "report:generate"]
   }
 }
 ```
+
+This is the structural difference from protocols that carry only a method and
+its arguments: the *why* travels with the request, which is what makes
+purpose-bound authorization possible at all.
 
 ---
 
@@ -320,51 +341,80 @@ This prevents the accumulation of structural technical debt and promotes an ecos
 
 ---
 
-## 8. Message Envelope
+## 10. Message Envelope
 
-All LIP messages are wrapped in a standard envelope.
+Every LIP message is a JSON document with the following envelope. There is no
+nesting: the envelope fields and the `payload` sit at the same level.
 
 ### Envelope Structure
 
 ```json
 {
-  "envelope": {
-    "version": "0.1.0",
-    "type": "intent_request",
-    "id": "msg-789",
-    "trace_id": "abc-123",
-    "session_id": "session-456",
-    "timestamp": "2024-12-21T10:00:00Z",
-    "sender": {
-      "agent_id": "agent-a",
-      "capabilities": []
-    },
-    "routing": {
-      "target": null,
-      "policy": "semantic_match"
-    }
+  "protocol_version": "0.1.0",
+  "message_id": "0d6f2f1e-1b4a-4c62-9f6a-2c0f0c9a1d33",
+  "session_id": "b1f2c3d4-5e6f-4a7b-8c9d-0e1f2a3b4c5d",
+  "message_type": "intent",
+  "timestamp": "2026-08-20T10:00:00+00:00",
+  "sender": {
+    "kind": "requester",
+    "id": "agent-a",
+    "oidc_subject": "auth0|abc123"
   },
-  "payload": {
-    // Intent or response content
-  }
+  "trace": {
+    "trace_id": "4bf92f3577b34da6a3ce929d0e0e4736",
+    "span_id": "00f067aa0ba902b7"
+  },
+  "payload": {}
 }
 ```
 
+| Field | Type | Description |
+|-------|------|-------------|
+| `protocol_version` | string | The LIP version this message conforms to. Absent on messages from pre-versioning peers, which MUST be treated as `0.1.0`. See [§13](#13-protocol-versioning) |
+| `message_id` | string (UUID) | Unique per message |
+| `session_id` | string | Identifies the interaction context. Every message after the opening `intent` MUST carry it |
+| `message_type` | enum | One of the performative acts below |
+| `timestamp` | string (RFC 3339) | Emission time, UTC |
+| `sender.kind` | enum | `requester`, `coordinator`, or `agent` |
+| `sender.id` | string | Stable identifier of the sender |
+| `sender.oidc_subject` | string | Authenticated subject, when transport authentication is in use |
+| `trace` | object | W3C Trace-Context compatible propagation fields |
+| `payload` | object | Type-specific content |
+
+Routing is deliberately **not** an envelope field. A requester expresses what
+it wants; selecting a counterparty is the coordinator's responsibility, and
+allowing the sender to name a target would reintroduce the endpoint coupling
+the protocol exists to remove.
+
 ### Message Types
 
-| Type | Direction | Description |
-|------|-----------|-------------|
-| `intent_request` | A → B | New intent expression |
-| `intent_response` | B → A | Response to intent |
-| `clarification_request` | B → A | Request for more information |
-| `clarification_response` | A → B | Additional information |
-| `contract_proposal` | Bus → Both | Proposed ephemeral contract |
-| `contract_accept` | Agent → Bus | Accept contract |
-| `contract_dissolve` | Either → Bus | End contract |
+Message types are **performative acts**: each one does something to the
+interaction context rather than merely reporting on it. The set is closed —
+an implementation that needs a new one needs an RFC.
+
+| Type | Direction | Effect on the interaction |
+|------|-----------|---------------------------|
+| `intent` | Requester → Coordinator | Articulates an objective; **instantiates** the interaction context |
+| `offer` | Agent → Coordinator, Coordinator → Requester | Declares a capability relevant to the intent. From the coordinator it carries the full composed execution plan for approval |
+| `accept` | Requester → Coordinator, Coordinator → Requester | Signals agreement; **stabilises** the context |
+| `reject` | Either | Signals refusal with a structured reason, optionally requesting renegotiation rather than termination |
+| `execute` | Coordinator → Agent | Authorises execution under the negotiated terms |
+| `complete` | Agent → Coordinator | Signals termination of execution, successful or not |
+| `dissolve` | Coordinator → All | **Invalidates** the context and triggers mandatory cleanup |
+| `event` | Coordinator or Agent → Any | Progress and status notification. Carries no performative weight and MUST NOT alter session state |
+
+Note that `reject` is not an error type. A rejection carrying a
+`renegotiation_hint` is a move in the conversation, and the coordinator
+SHOULD attempt a further negotiation round incorporating it. See
+[§11](#11-error-handling).
+
+Every message is wrapped in the envelope defined above, and the payload of
+each type is specified by its
+[JSON Schema](https://github.com/draiven-io/agentic-bus/tree/main/schemas).
 
 ---
 
-## 9. Error Handling
+## 11. Error Handling
 
 Errors in LIP are opportunities for negotiation, not failures.
 
@@ -396,7 +446,7 @@ Errors in LIP are opportunities for negotiation, not failures.
 
 ---
 
-## 10. Security Considerations
+## 12. Security Considerations
 
 ### Authentication
 
@@ -418,6 +468,32 @@ Errors in LIP are opportunities for negotiation, not failures.
 
 ---
 
+## 13. Protocol Versioning
+
+Every envelope carries `protocol_version`. Semantic versioning applies to the
+**wire format**:
+
+| Component | Changes when |
+|-----------|--------------|
+| Patch | Editorial clarification only; no implementation need change |
+| Minor | Backwards-compatible addition — a new optional field, or a new message type a peer may safely ignore |
+| Major | Anything that would break an existing implementation: a removed or renamed field, a changed type, a new required field, or a change to the meaning of an existing performative |
+
+Implementations:
+
+- MUST populate `protocol_version` on every message they emit.
+- MUST treat a message with no `protocol_version` as `0.1.0`.
+- MUST reject a message whose major version they do not implement, using a
+  `reject` carrying `reason: "unsupported_protocol_version"`.
+- SHOULD accept a higher minor version, ignoring fields and message types
+  they do not recognise. This is what makes minor additions safe.
+
+Ignoring an unknown `event` message is always safe by construction; ignoring
+an unknown performative is not, which is why new performatives are a major
+change.
+
+---
+
 ## Related Specifications
 
 - [IBAC](../ibac/README.md) - Intent-Based Access Control
@@ -425,6 +501,8 @@ Errors in LIP are opportunities for negotiation, not failures.
 
 ## Appendices
 
-- [A. JSON Schema Definitions](schemas.md) *(planned)*
+- **A. JSON Schema definitions** — [generated from the reference implementation](https://github.com/draiven-io/agentic-bus/tree/main/schemas).
+  Regenerate with `python -m app.core.protocol.export_schemas`; CI fails if
+  they drift from the models.
 - [B. Protocol Examples](examples.md) *(planned)*
 - [C. Compatibility Guidelines](compatibility.md) *(planned)*

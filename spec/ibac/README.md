@@ -4,7 +4,7 @@
 
 **Status**: Draft  
 **Version**: 0.1.0  
-**Last Updated**: 2024-12
+**Last updated**: 2026-08
 
 ---
 
@@ -23,8 +23,8 @@ Intent-Based Access Control (IBAC) is a governance model for liquid systems wher
 5. [Policy Model](#5-policy-model)
 6. [Evaluation Process](#6-evaluation-process)
 7. [Policy Language](#7-policy-language)
-8. [Semantic Observability](#8-semantic-observability)
-9. [Integration with LIP](#9-integration-with-lip)
+8. [Integration with LIP](#8-integration-with-lip)
+9. [Audit & Observability](#9-audit--observability)
 10. [Security Considerations](#10-security-considerations)
 11. [Examples](#11-examples)
 
@@ -120,7 +120,7 @@ Potential negative outcomes associated with allowing an intent:
 
 ---
 
-## 4. Policy Model
+## 5. Policy Model
 
 ### Policy Structure
 
@@ -150,7 +150,7 @@ Lower-level policies can refine but not override higher-level denials.
 
 ---
 
-## 5. Evaluation Process
+## 6. Evaluation Process
 
 ### Evaluation Flow
 
@@ -207,7 +207,7 @@ Lower-level policies can refine but not override higher-level denials.
 
 ---
 
-## 6. Policy Language
+## 7. Policy Language
 
 ### Policy Definition
 
@@ -271,7 +271,7 @@ policy:
 
 ---
 
-## 7. Integration with LIP
+## 8. Integration with LIP
 
 ### Intent Envelope Extension
 
@@ -317,7 +317,7 @@ Contracts can include policy references:
 
 ---
 
-## 8. Audit & Observability
+## 9. Audit & Observability
 
 ### Policy Decision Log
 
@@ -361,7 +361,7 @@ Every policy evaluation produces an auditable record:
 
 ---
 
-## 9. Security Considerations
+## 10. Security Considerations
 
 ### Purpose Verification
 
@@ -381,9 +381,38 @@ Every policy evaluation produces an auditable record:
 - Behavioral analysis should complement declarations
 - Anomaly detection for purpose patterns
 
+### Language-Model Evaluation
+
+Evaluating a natural-language policy against a natural-language intent
+invites a language model into the decision path. That is what allows a rule
+such as *"prevent agents from reaching the public internet"* to be enforced
+without enumerating hosts — and it introduces three properties that
+implementers MUST account for:
+
+- **Injection surface.** Intent text, capability descriptions and upstream
+  agent output all reach the evaluation prompt. Content authored to read as
+  instruction can influence a decision.
+- **Non-determinism.** The same request may not yield the same decision
+  twice. A decision is therefore not reproducible from the record alone.
+- **Unverifiable decisions.** An unsigned decision cannot be independently
+  checked after the fact.
+
+Implementations:
+
+- MUST evaluate hard constraints — scopes, data domains, cost ceilings,
+  egress — deterministically, and MUST NOT allow a model to widen them.
+- SHOULD confine model reasoning to classification *within* limits already
+  established deterministically.
+- SHOULD sign decision records so an audit can verify what was decided.
+- MUST fail closed when evaluation is unavailable.
+
+**IBAC is defence in depth, not a substitute for a security boundary.** An
+action an agent must never take should also be impossible in the environment
+the agent runs in.
+
 ---
 
-## 10. Examples
+## 11. Examples
 
 ### Example 1: Data Export Request
 

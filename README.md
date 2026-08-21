@@ -13,8 +13,9 @@ This repository hosts the core specifications, governance documents, and design 
 
 - **Specifications**: [spec/](spec/)
 - **RFCs**: [rfcs/](rfcs/)
-- **Semantic Bus**: [github.com/draiven-io/semantic-bus](https://github.com/draiven-io/semantic-bus)
-- **LIP SDK (Python)**: [github.com/draiven-io/lip-sdk-python](https://github.com/draiven-io/lip-sdk-python)
+- **Reference implementation**: [github.com/draiven-io/agentic-bus](https://github.com/draiven-io/agentic-bus)
+- **Paper**: [arXiv:2601.21993](https://arxiv.org/abs/2601.21993)
+- **Website**: [liquidinterfaces.org](https://liquidinterfaces.org)
 - **Discussions**: [GitHub Discussions](https://github.com/draiven-io/liquid-interfaces/discussions)
 - **Issues**: [GitHub Issues](https://github.com/draiven-io/liquid-interfaces/issues)
 
@@ -241,8 +242,7 @@ liquid-interfaces/
 ├── docs/                  # Specifications, diagrams, and guides
 │   ├── overview.md        # High-level architecture overview
 │   ├── foundations.md     # Theoretical foundations (Bauman, Gadamer, Latour)
-│   ├── glossary.md        # Key terms and definitions
-│   └── case-studies/      # Real-world application examples
+│   └── glossary.md        # Key terms and definitions
 ├── spec/                  # Core specifications
 │   ├── lip/               # Liquid Interface Protocol
 │   ├── ibac/              # Intent-Based Access Control
@@ -293,8 +293,13 @@ In this model:
 
 | Project | Description | Status |
 |---------|-------------|--------|
-| [Semantic Bus](https://github.com/draiven-io/semantic-bus) | Intent-aware message routing and multi-agent flow execution | Active |
-| [LIP SDK (Python)](https://github.com/draiven-io/lip-sdk-python) | Python client library for building LIP agents | Active |
+| [Agentic Bus](https://github.com/draiven-io/agentic-bus) | Full coordination runtime: intent admission, semantic discovery, negotiation, IBAC governance, dynamic graph execution, dissolution. Ships a Python agent SDK, an MCP bridge, an admin dashboard and a CLI | Active |
+
+> **Note on earlier names.** Work published before 2026 referred to a
+> *Semantic Bus* and a separate *LIP SDK*. Both were consolidated into
+> Agentic Bus; the agent SDK now lives in that repository under
+> `app/agents/base`. The protocol is *Liquid Interfaces Protocol (LIP)* and
+> the runtime is *Agentic Bus* — those are the only two names in use.
 
 ---
 
@@ -334,7 +339,7 @@ For multi-agent flows, the requester receives a single aggregated offer:
 ```python
 {
     "offer_id": "aggregated-uuid",
-    "provider_id": "semantic-bus",  # Bus manages the flow
+    "provider_id": "agentic-bus",  # The coordinator manages the flow
     "metadata": {
         "is_multi_agent_flow": True,
         "flow_agents": ["translator-agent", "summarizer-agent"],
