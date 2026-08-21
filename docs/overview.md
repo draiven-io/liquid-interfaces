@@ -285,7 +285,7 @@ Human ──(intent)──► Agent A ──(clarification needed)──► Huma
 2. **Study the Protocol**: Review the [LIP Specification](../spec/lip/README.md)
 3. **Learn Access Control**: Study [IBAC](../spec/ibac/README.md)
 4. **Explore Views**: Review [View Conventions](../spec/views/README.md)
-5. **See It in Action**: Check the [Case Studies](case-studies/) and [Reference Implementations](../README.md#-reference-implementations)
+5. **See It in Action**: Run the [reference implementation](https://github.com/draiven-io/agentic-bus)
 
 ---
 
