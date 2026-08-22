@@ -29,10 +29,16 @@ LIP 0.2.0 conformance — agent ts-weather-01
 CONFORMANT (0 advisory warnings)
 ```
 
-Roughly 300 lines, three runtime dependencies deep (`ws` and its two type
-packages).
+Roughly 300 lines over one runtime dependency.
+
+That client has since been extracted and published as
+**[`liquid-interfaces`](https://www.npmjs.com/package/liquid-interfaces)**;
+this example is now a consumer of it, and the findings below are what the
+exercise produced.
 
 ## Running it
+
+From the repository root:
 
 ```bash
 npm install && npm run build
@@ -128,9 +134,8 @@ Worth recording, since the gaps above are the loud part:
 ## Layout
 
 ```
-src/lip.ts     the protocol client — registration, offers, execution, dissolution
-src/agent.ts   a weather agent using it
+src/agent.ts   a weather agent, built on the liquid-interfaces client
 ```
 
-`lip.ts` has no dependency on anything in this repository. It could be
-extracted into a package as-is.
+The client itself lives in
+[`packages/liquid-interfaces`](../../packages/liquid-interfaces).

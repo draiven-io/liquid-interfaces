@@ -1,0 +1,113 @@
+name: TypeScript
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ts-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test:
+    name: Node ${{ matrix.node }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        node: ["20", "22", "24"]
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node }}
+          cache: npm
+
+      - run: npm ci
+      - run: npm run build
+      - run: npm run typecheck
+      - run: npm test
+
+  package:
+    name: Package
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+
+      - run: npm ci
+      - run: npm run build -w liquid-interfaces
+
+      - name: The published entry points must actually load
+        # An export map that is wrong in one module system is the classic way
+        # to ship a package nobody can import, and nothing else catches it.
+        working-directory: packages/liquid-interfaces
+        run: |
+          node -e "import('./dist/index.js').then(m => { if (typeof m.LipAgent !== 'function') throw new Error('ESM entry point is broken'); })"
+          node -e "if (typeof require('./dist/index.cjs').LipAgent !== 'function') throw new Error('CJS entry point is broken')"
+          node -e "if (typeof require('./dist/testing.cjs').LocalBus !== 'function') throw new Error('testing subpath is broken')"
+
+      - name: Inspect the tarball
+        working-directory: packages/liquid-interfaces
+        run: npm pack --dry-run
+
+  conformance:
+    name: Conformance against the reference coordinator
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - run: npm ci
+      - run: npm run build
+
+      - name: Install the reference implementation
+        # From main rather than PyPI: `agbus conformance` postdates the last
+        # release. Switch to the released package once it ships the command.
+        run: pip install "agentic-bus @ git+https://github.com/draiven-io/agentic-bus@main"
+
+      - name: Grade the TypeScript agent against the specification
+        run: |
+          agbus conformance --port 9100 --wait 60 --json > report.json &
+          suite=$!
+          sleep 5
+          node examples/typescript-agent/dist/agent.js ws://127.0.0.1:9100 &
+          agent=$!
+          wait $suite
+          kill $agent 2>/dev/null || true
+
+          cat report.json
+          python -c "
+          import json, sys
+          report = json.load(open('report.json'))
+          failed = [r['id'] for r in report['results'] if r['status'] == 'FAIL']
+          if not report['conformant']:
+              sys.exit('not conformant; failed: ' + ', '.join(failed))
+          if not report['agent_id']:
+              sys.exit('no agent ever connected; the run proved nothing')
+          print('conformant as', report['agent_id'])
+          "
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: conformance-report
+          path: report.json

@@ -7,7 +7,7 @@
  * offers against intents, and executes when authorised.
  */
 
-import { LipAgent, type AgentHandler, type Capability } from "./lip.js";
+import { LipAgent, type AgentHandler, type Capability } from "liquid-interfaces";
 
 const weather: AgentHandler = {
   capabilities(): Capability[] {

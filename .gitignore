@@ -12,3 +12,8 @@ Thumbs.db
 # Temporary files
 *.tmp
 *.bak
+
+# Node
+node_modules/
+dist/
+*.tsbuildinfo
