@@ -1,0 +1,19 @@
+{
+  "name": "lip-typescript-agent",
+  "version": "0.1.0",
+  "private": true,
+  "description": "A Liquid Interfaces agent written from the specification",
+  "type": "module",
+  "scripts": {
+    "build": "tsc",
+    "start": "node dist/agent.js"
+  },
+  "dependencies": {
+    "ws": "^8.18.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "@types/ws": "^8.5.12",
+    "typescript": "^5.6.0"
+  }
+}
