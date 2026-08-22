@@ -414,6 +414,11 @@ SHOULD attempt a further negotiation round incorporating it. See
 their `session_id` is empty. Every other performative carries the session it
 acts on.
 
+The table gives each performative's origin. Note that a coordinator
+**relays** `intent` to the agents it considers candidates, carrying the
+session it opened; an agent could not otherwise know what to offer against.
+Offers are returned under that same `session_id`.
+
 Every message is wrapped in the envelope defined above, and the payload of
 each type is specified by its
 [JSON Schema](https://github.com/draiven-io/agentic-bus/tree/main/schemas).
@@ -439,6 +444,11 @@ Agent                               Coordinator
 
 Agents:
 
+- MUST be receiving before they register. The acknowledgement can arrive
+  before the send returns, so a client that attaches its message handler
+  after registering may miss it — along with anything else sent in that
+  window. An independent implementation lost both its `registered` answer and
+  a subsequent `intent` to exactly this.
 - MUST send `register` as the first message on every connection.
 - SHOULD wait for `registered` before considering themselves live.
 - MUST NOT treat a missing `registered` as fatal — a coordinator implementing
@@ -460,6 +470,16 @@ Coordinators:
 > `session_id="__registration__"`. That form was never described here, so an
 > agent written from this document alone would connect and never be
 > discovered. See [RFC 0001](../../rfcs/0001-register-performative.md).
+
+---
+
+### Dissolution During Execution
+
+An agent may be executing when `dissolve` arrives. It MUST abandon that work,
+and MUST NOT send `complete` for the dissolved session: the interaction
+context has been invalidated, so there is nothing left to complete against. A
+coordinator MUST tolerate a `complete` that was already in flight when it
+sent the `dissolve`.
 
 ---
 
@@ -499,6 +519,11 @@ Errors in LIP are opportunities for negotiation, not failures.
 
 ### Authentication
 
+- Credentials are carried in the transport's connection handshake, not in
+  protocol messages. Over WebSocket that is an `Authorization: Bearer
+  <token>` header on the upgrade request. Stating this matters: an
+  implementation that put the token in its first message, or in a query
+  parameter, would fail to connect with nothing to indicate why.
 - Agents must be authenticated before participating
 - Identity is established but not solely relied upon for authorization
 - See [IBAC](../ibac/README.md) for purpose-based access control
