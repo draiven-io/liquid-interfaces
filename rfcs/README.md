@@ -168,6 +168,7 @@ RFCs are evaluated on:
 | RFC | Title | Status |
 |-----|-------|--------|
 | [0001](0001-register-performative.md) | The `register` Performative | Draft |
+| [0002](0002-capability-authority.md) | Capability Authority | Draft |
 
 ---
 
