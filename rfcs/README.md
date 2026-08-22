@@ -165,7 +165,9 @@ RFCs are evaluated on:
 
 ## Currently Open RFCs
 
-*No RFCs are currently open for review.*
+| RFC | Title | Status |
+|-----|-------|--------|
+| [0001](0001-register-performative.md) | The `register` Performative | Draft |
 
 ---
 
