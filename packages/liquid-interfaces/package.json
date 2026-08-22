@@ -1,0 +1,69 @@
+{
+  "name": "liquid-interfaces",
+  "version": "0.2.0",
+  "description": "TypeScript client for the Liquid Interfaces Protocol \u00e2\u20ac\u201d agents that register, offer, execute and dissolve",
+  "keywords": [
+    "lip",
+    "liquid-interfaces",
+    "agent",
+    "multi-agent",
+    "agentic",
+    "protocol",
+    "websocket",
+    "ai-agents"
+  ],
+  "homepage": "https://liquidinterfaces.org",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/draiven-io/liquid-interfaces.git",
+    "directory": "packages/liquid-interfaces"
+  },
+  "bugs": "https://github.com/draiven-io/liquid-interfaces/issues",
+  "license": "Apache-2.0",
+  "author": "Dhiogo Jos\u00c3\u00a9 Correa de S\u00c3\u00a1",
+  "type": "module",
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "require": "./dist/index.cjs"
+    },
+    "./testing": {
+      "types": "./dist/testing.d.ts",
+      "import": "./dist/testing.js",
+      "require": "./dist/testing.cjs"
+    },
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
+  "sideEffects": false,
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "build": "tsup",
+    "test": "npm run build && node --test",
+    "typecheck": "tsc --noEmit",
+    "prepublishOnly": "npm run build"
+  },
+  "dependencies": {
+    "ws": "^8.18.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "@types/ws": "^8.5.12",
+    "tsup": "^8.3.0",
+    "typescript": "^5.6.0"
+  },
+  "publishConfig": {
+    "access": "public",
+    "provenance": true
+  }
+}

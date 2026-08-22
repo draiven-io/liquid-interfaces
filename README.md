@@ -4,6 +4,8 @@
 
 [![License: Apache 2.0](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](LICENSE)
 [![RFCs](https://img.shields.io/badge/RFCs-Open-green.svg)](rfcs/)
+[![npm](https://img.shields.io/npm/v/liquid-interfaces?label=npm)](https://www.npmjs.com/package/liquid-interfaces)
+[![PyPI](https://img.shields.io/pypi/v/agentic-bus?label=pypi)](https://pypi.org/project/agentic-bus/)
 
 **Liquid Interfaces** is an open standard for intent-driven, semantically negotiated interoperability in autonomous agent systems.
 
@@ -14,6 +16,9 @@ This repository hosts the core specifications, governance documents, and design 
 - **Specifications**: [spec/](spec/)
 - **RFCs**: [rfcs/](rfcs/)
 - **Reference implementation**: [github.com/draiven-io/agentic-bus](https://github.com/draiven-io/agentic-bus)
+- **Python SDK**: [`pip install agentic-bus`](https://pypi.org/project/agentic-bus/)
+- **TypeScript SDK**: [`npm install liquid-interfaces`](https://www.npmjs.com/package/liquid-interfaces) — [source](packages/liquid-interfaces)
+- **Examples**: [examples/](examples/)
 - **Paper**: [arXiv:2601.21993](https://arxiv.org/abs/2601.21993)
 - **Website**: [liquidinterfaces.org](https://liquidinterfaces.org)
 - **Discussions**: [GitHub Discussions](https://github.com/draiven-io/liquid-interfaces/discussions)

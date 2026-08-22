@@ -1,0 +1,14 @@
+{
+  "name": "liquid-interfaces-workspace",
+  "private": true,
+  "description": "The Liquid Interfaces Protocol: specification, RFCs and reference clients",
+  "workspaces": [
+    "packages/*",
+    "examples/typescript-agent"
+  ],
+  "scripts": {
+    "build": "npm run build --workspaces --if-present",
+    "test": "npm run test --workspaces --if-present",
+    "typecheck": "npm run typecheck --workspaces --if-present"
+  }
+}

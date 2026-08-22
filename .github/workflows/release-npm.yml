@@ -1,0 +1,93 @@
+name: Release (npm)
+
+# Publishes packages/liquid-interfaces to npm when a version tag is pushed.
+#
+#   git tag ts-v0.2.0 && git push origin ts-v0.2.0
+#
+# The tag is prefixed because this repository also carries the specification,
+# which is versioned separately from the client that implements it.
+#
+# Authentication prefers npm Trusted Publishing (OIDC), so no token is stored
+# here. That has to be configured against an existing package, so the very
+# first release is published manually — see RELEASING.md. Until then the
+# NPM_TOKEN secret is used if present.
+
+on:
+  push:
+    tags: ["ts-v*"]
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: "Build and check without publishing"
+        type: boolean
+        default: true
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    name: Verify
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+
+      - name: Verify the tag matches the packaged version
+        # A tag that disagrees with package.json produces a release whose
+        # metadata contradicts its name, and npm will not let you republish
+        # the same version to fix it.
+        if: startsWith(github.ref, 'refs/tags/ts-v')
+        run: |
+          tag_version="${GITHUB_REF_NAME#ts-v}"
+          pkg_version="$(node -p "require('./packages/liquid-interfaces/package.json').version")"
+          echo "tag=$tag_version package.json=$pkg_version"
+          if [ "$tag_version" != "$pkg_version" ]; then
+            echo "::error::Tag ts-v$tag_version does not match package.json version $pkg_version"
+            exit 1
+          fi
+
+      - run: npm ci
+      - run: npm run build
+      - run: npm run typecheck
+      - run: npm test
+
+  publish:
+    name: Publish to npm
+    needs: verify
+    runs-on: ubuntu-latest
+    environment: npm
+    permissions:
+      contents: read
+      id-token: write # provenance, and trusted publishing
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          registry-url: "https://registry.npmjs.org"
+          cache: npm
+
+      # Trusted publishing needs a recent npm; the one bundled with Node 22
+      # predates it.
+      - run: npm install -g npm@latest
+
+      - run: npm ci
+      - run: npm run build -w liquid-interfaces
+
+      - name: Publish
+        if: ${{ github.event_name == 'push' || !inputs.dry_run }}
+        working-directory: packages/liquid-interfaces
+        run: npm publish --provenance --access public
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+      - name: Dry run
+        if: ${{ github.event_name == 'workflow_dispatch' && inputs.dry_run }}
+        working-directory: packages/liquid-interfaces
+        run: npm publish --dry-run --access public
