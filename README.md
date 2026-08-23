@@ -14,6 +14,7 @@ This repository hosts the core specifications, governance documents, and design 
 ## 📖 Links
 
 - **Technical reference (PDF)**: [19-page overview of LIP, IBAC and agentic-bus](docs/liquid-interfaces-technical-reference.pdf) — the argument, the evidence, and the objections answered
+- **Worked example**: [an upsell that touches money and a customer](docs/worked-example-upsell.md) — the five evaluation points on one interaction
 - **Specifications**: [spec/](spec/)
 - **RFCs**: [rfcs/](rfcs/)
 - **Reference implementation**: [github.com/draiven-io/agentic-bus](https://github.com/draiven-io/agentic-bus)
