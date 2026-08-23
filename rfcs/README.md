@@ -165,17 +165,27 @@ RFCs are evaluated on:
 
 ## Currently Open RFCs
 
-| RFC | Title | Status |
-|-----|-------|--------|
-| [0001](0001-register-performative.md) | The `register` Performative | Draft |
-| [0002](0002-capability-authority.md) | Capability Authority | Draft |
-| [0003](0003-scope-vocabulary.md) | Scope Vocabulary and Admission | Draft |
+*No RFCs are currently open for discussion.*
 
 ---
 
 ## Accepted RFCs
 
-*No RFCs have been accepted yet.*
+| RFC | Title | Landed in |
+|-----|-------|-----------|
+| [0001](0001-register-performative.md) | The `register` Performative | LIP 0.2.0 |
+| [0002](0002-capability-authority.md) | Capability Authority | LIP 0.3.0 |
+| [0003](0003-scope-vocabulary.md) | Scope Vocabulary and Admission | LIP 0.3.0 |
+
+Accepted means **implemented and shipped**, not merely agreed. Each of these
+is exercised by the conformance suite or by tests in the reference
+implementation; an RFC that had been agreed and not built would still be
+listed as open, because the useful question a reader has is what a coordinator
+will actually do.
+
+RFC 0002 landed in part: artifact validation is implemented, and the
+constraint on model-composed plans applies to coordinators that compose that
+way. See its changelog.
 
 ---
 

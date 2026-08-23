@@ -59,6 +59,18 @@ if (loaded.some((l) => l.endsWith("false"))) {
   throw new Error("a webfont silently fell back: " + loaded.join(", "));
 }
 
+// Read the version out of the document rather than hardcoding it here. The
+// running header said "LIP 0.2.0" for a whole release after the cover said
+// 0.3.0, because two places had to be edited and only one was.
+const version = await page.evaluate(() => {
+  const mark = document.querySelector(".cover .mark")?.textContent ?? "";
+  return (mark.match(/LIP\s+([0-9]+\.[0-9]+\.[0-9]+)/) || [])[1] ?? "";
+});
+if (!version) {
+  throw new Error("could not read the protocol version from the cover");
+}
+console.log("version →", version);
+
 const furniture = (left, right) =>
   `<div style="width:100%;font-size:7pt;font-family:'IBM Plex Mono',monospace;` +
   `color:#8A90A0;padding:0 18mm;display:flex;justify-content:space-between;">` +
@@ -70,7 +82,10 @@ await page.pdf({
   printBackground: true,
   displayHeaderFooter: true,
   margin: { top: "18mm", bottom: "16mm", left: "18mm", right: "18mm" },
-  headerTemplate: furniture("LIQUID INTERFACES · TECHNICAL REFERENCE", "LIP 0.2.0"),
+  headerTemplate: furniture(
+    "LIQUID INTERFACES · TECHNICAL REFERENCE",
+    `LIP ${version}`,
+  ),
   footerTemplate: furniture(
     "draiven-io/liquid-interfaces",
     '<span class="pageNumber"></span> / <span class="totalPages"></span>',

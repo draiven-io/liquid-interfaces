@@ -1,9 +1,10 @@
 # RFC 0001: The `register` Performative
 
-> **Status**: Draft
+> **Status**: Accepted
 > **Author**: Dhiogo José Correa de Sá, @dhiogocorrea
 > **Created**: 2026-08-21
 > **Updated**: 2026-08-21
+> **Landed in**: LIP 0.2.0
 
 ---
 
