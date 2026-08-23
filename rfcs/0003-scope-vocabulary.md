@@ -1,9 +1,10 @@
 # RFC 0003: Scope Vocabulary and Admission
 
-> **Status**: Draft
+> **Status**: Accepted
 > **Author**: Dhiogo José Correa de Sá, @dhiogocorrea
 > **Created**: 2026-08-23
 > **Updated**: 2026-08-23
+> **Landed in**: LIP 0.3.0
 
 ---
 

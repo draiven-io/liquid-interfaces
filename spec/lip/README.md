@@ -3,7 +3,7 @@
 > The core protocol for intent-driven agent interaction
 
 **Status**: Draft  
-**Protocol version**: 0.2.0  
+**Protocol version**: 0.3.0  
 **Last updated**: 2026-08
 
 > **Normative sources.** This document, §4.1 of the
@@ -287,6 +287,45 @@ Agents register capabilities that describe what they can do.
 }
 ```
 
+### What an offer promises
+
+An offer MAY declare the shape of what it will produce:
+
+| Field | Type | Description |
+|---|---|---|
+| `expected_artifacts` | array\<string\> | Names of the artifacts this capability produces |
+| `output_schema` | object | JSON Schema describing the artifact payload |
+
+A coordinator SHOULD validate a `complete` against the `output_schema` its
+accepted offer declared, and MUST NOT treat an absent schema as a failure. An
+agent that cannot describe its output is still useful, and demanding a schema
+from every agent would exclude the exploratory ones this protocol exists to
+accommodate. **Silence is honest; a promise that is broken is not.**
+
+See [RFC 0002](../../rfcs/0002-capability-authority.md).
+
+### Scope vocabulary
+
+Scope names belong to a **deployment**, not to an agent. An agent describes
+what it does; a coordinator decides what that requires.
+
+- Agents SHOULD NOT declare scope names, and SHOULD describe the capability
+  instead. `required_scopes` in the register payload is a **request**, never a
+  grant.
+- Coordinators MUST NOT grant a scope because an agent declared it, and MUST
+  report what was actually granted in `granted_scopes`.
+- Coordinators SHOULD answer a registration naming vocabulary they do not
+  recognise with the names they do, so an implementer learns by being
+  corrected rather than from documentation that goes stale.
+- Scopes MUST match hierarchically: a grant of `a:*` covers `a:b`; a grant of
+  `a:b` covers only itself.
+
+An agent **MUST NOT assume a declared scope was granted**. The two are
+different things, and an agent that conflates them discovers otherwise at the
+point of use — a worse place to find out.
+
+See [RFC 0003](../../rfcs/0003-scope-vocabulary.md).
+
 ---
 
 ## 9. Contract Lifecycle
@@ -463,6 +502,10 @@ Coordinators:
   agent waiting on that answer would otherwise wait indefinitely.
 - MAY accept an agent while declining individual capabilities, reporting what
   was accepted in `registered_capabilities`.
+- MUST report the scopes actually granted in `granted_scopes` (0.3.0), so an
+  agent can tell what it received rather than assuming it received what it
+  asked for. `unrecognised_scopes` and `catalogue` carry what was refused and
+  what the coordinator recognises.
 - SHOULD still accept the deprecated pre-0.2.0 form (`complete` with
   `session_id="__registration__"`), logging a deprecation warning.
 
@@ -496,6 +539,7 @@ Errors in LIP are opportunities for negotiation, not failures.
 | `capability_mismatch` | No matching agents | Suggest alternatives |
 | `policy_denial` | IBAC policy rejected | Explain requirements |
 | `contract_expired` | Interaction timed out | Renegotiate if needed |
+| `schema_violation` | Artifact does not match its declared `output_schema` | Report the expected shape |
 
 ### Error Response
 
@@ -579,6 +623,21 @@ A minor version can still constrain the order in which peers are upgraded.
 **Upgrade coordinators before agents.** A specification that adds a
 performative one side must understand SHOULD state the upgrade ordering
 explicitly, rather than leaving implementers to discover it.
+
+**0.3.0 is symmetric**, unusually for this protocol, and worth saying plainly
+because the asymmetry above is the norm here. It adds optional fields to
+`registered`, `offer` and `complete`, and changes the *meaning* of
+`required_scopes` from an assertion to a request — which changes no wire
+format:
+
+| Agent | Coordinator | Result |
+|-------|-------------|--------|
+| 0.3.0 | 0.3.0 | Grants reported; artifacts validated |
+| 0.2.0 | 0.3.0 | Works. Declared scopes are treated as requests, and the agent ignores the fields reporting what it received |
+| 0.3.0 | 0.2.0 | Works. The agent is told nothing about grants, and no artifact is validated — the guarantees are simply unavailable |
+
+An old peer on either side degrades to 0.2.0 behaviour. Nothing breaks; the
+guarantee is not available until both sides are current.
 
 ### Reading an unversioned message
 

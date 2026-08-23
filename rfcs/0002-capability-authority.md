@@ -1,9 +1,10 @@
 # RFC 0002: Capability Authority
 
-> **Status**: Draft
+> **Status**: Accepted
 > **Author**: Dhiogo José Correa de Sá, @dhiogocorrea
 > **Created**: 2026-08-22
 > **Updated**: 2026-08-22
+> **Landed in**: LIP 0.3.0
 
 ---
 

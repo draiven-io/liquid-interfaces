@@ -168,7 +168,7 @@ hr{border:none;border-top:1px solid var(--rule);margin:1.6rem 0;}
 <!-- ============ COVER ============ -->
 <div class="cover">
   <div>
-    <div class="mark">Technical Reference · LIP 0.2.0</div>
+    <div class="mark">Technical Reference · LIP 0.3.0</div>
     <h1>Liquid Interfaces</h1>
     <p class="sub">A protocol for agent systems where the interface is an event, not an artifact</p>
     <div class="thesis">
@@ -178,8 +178,8 @@ hr{border:none;border-top:1px solid var(--rule);margin:1.6rem 0;}
 
   <div>
     <dl class="cover-meta">
-      <div><dt>Protocol</dt><dd>LIP 0.2.0</dd></div>
-      <div><dt>Reference implementation</dt><dd>agentic-bus 0.2.0</dd></div>
+      <div><dt>Protocol</dt><dd>LIP 0.3.0</dd></div>
+      <div><dt>Reference implementation</dt><dd>agentic-bus 0.3.0</dd></div>
       <div><dt>Governance model</dt><dd>IBAC — Intent-Based Access Control</dd></div>
       <div><dt>Specification</dt><dd>github.com/draiven-io/liquid-interfaces</dd></div>
       <div><dt>Paper</dt><dd>arXiv:2601.21993</dd></div>
@@ -256,7 +256,7 @@ hr{border:none;border-top:1px solid var(--rule);margin:1.6rem 0;}
   <p>Identical for every message type. The payload varies; the frame does not.</p>
 
 <pre><code>{
-  <span class="c-key">"protocol_version"</span>: <span class="c-str">"0.2.0"</span>,
+  <span class="c-key">"protocol_version"</span>: <span class="c-str">"0.3.0"</span>,
   <span class="c-key">"message_id"</span>:       <span class="c-str">"0d6f2f1e-1b4a-4c62-9f6a-2c0f0c9a1d33"</span>,
   <span class="c-key">"session_id"</span>:       <span class="c-str">"9d1f7c02-..."</span>,   <span class="c-com">// the interaction context</span>
   <span class="c-key">"message_type"</span>:     <span class="c-str">"offer"</span>,          <span class="c-com">// the performative</span>
@@ -378,6 +378,8 @@ hr{border:none;border-top:1px solid var(--rule);margin:1.6rem 0;}
       <tr><td>0.2.0</td><td>0.2.0</td><td>Full handshake</td></tr>
       <tr><td>0.1.0</td><td>0.2.0</td><td>Works — the deprecated form is still accepted</td></tr>
       <tr><td>0.2.0</td><td>0.1.0</td><td><span class="pill deny">Agent never registers</span> — the coordinator ignores <code>register</code></td></tr>
+      <tr><td>0.3.0</td><td>0.2.0</td><td>Works — the agent is told nothing about grants, and no artifact is validated</td></tr>
+      <tr><td>0.2.0</td><td>0.3.0</td><td>Works — declared scopes are read as requests</td></tr>
     </tbody>
   </table>
   </div>
@@ -586,9 +588,9 @@ hr{border:none;border-top:1px solid var(--rule);margin:1.6rem 0;}
   <p class="lead">The reference implementation: a coordinator, an agent SDK, an admin API and a dashboard. Python 3.11+, Apache-licensed, published to PyPI.</p>
 
   <div class="stats">
-    <div class="stat"><div class="v num">21.5k</div><div class="l">lines of implementation</div></div>
-    <div class="stat"><div class="v num">9.7k</div><div class="l">lines of tests</div></div>
-    <div class="stat"><div class="v num">595</div><div class="l">tests passing</div></div>
+    <div class="stat"><div class="v num">24k</div><div class="l">lines of implementation</div></div>
+    <div class="stat"><div class="v num">13k</div><div class="l">lines of tests</div></div>
+    <div class="stat"><div class="v num">740</div><div class="l">tests passing</div></div>
   </div>
 
   <h3>5.1 What the coordinator does</h3>
@@ -802,9 +804,9 @@ hr{border:none;border-top:1px solid var(--rule);margin:1.6rem 0;}
   <table>
     <thead><tr><th style="width:34%">Component</th><th style="width:18%">Version</th><th>Status</th></tr></thead>
     <tbody>
-      <tr><td>LIP specification</td><td>0.2.0</td><td>Published, with RFC process</td></tr>
-      <tr><td>agentic-bus (Python)</td><td>0.2.0</td><td>Published on PyPI</td></tr>
-      <tr><td>JSON Schemas</td><td>0.2.0</td><td>Generated from the models; CI fails on drift</td></tr>
+      <tr><td>LIP specification</td><td>0.3.0</td><td>Published; RFCs 0001–0003 accepted</td></tr>
+      <tr><td>agentic-bus (Python)</td><td>0.3.0</td><td>Published on PyPI</td></tr>
+      <tr><td>JSON Schemas</td><td>0.3.0</td><td>Generated from the models; CI fails on drift</td></tr>
       <tr><td>Conformance suite</td><td>—</td><td><code>agbus conformance</code>; 12 graded requirements</td></tr>
       <tr><td>TypeScript client</td><td>0.2.0</td><td>In-repo and conformant; npm release pending</td></tr>
       <tr><td>IBAC engine</td><td>—</td><td>Five points, three layers, fail-closed, bounded capabilities</td></tr>
@@ -815,11 +817,14 @@ hr{border:none;border-top:1px solid var(--rule);margin:1.6rem 0;}
 
   <h3>9.2 Known gaps</h3>
 
-  <p>Stating these first is more persuasive than being asked about them.</p>
+  <p>Stating these first is more persuasive than being asked about them. Three
+  that appeared here at 0.2.0 — no capability authority, no tenant isolation on
+  the coordination path, and no enforcement of a granted scope — closed in
+  0.3.0. The ones below did not.</p>
 
   <ul>
-    <li><strong>No capability authority yet.</strong> Composition is not constrained to offered capabilities, and artifacts are not validated against declared schemas. RFC 0002 proposes the fix.</li>
-    <li><strong>Tenant isolation is not enforced on the coordination path.</strong> The data model has tenants; the registry is global and the envelope carries no tenant. Blocking for multi-customer deployments.</li>
+    <li><strong>A scope is still a statement of intent.</strong> Grants are catalogued, bound by an administrator and checked at the point of use — but the check lives inside the agent's process. It stops an agent whose model was talked into exceeding its authority; it does not stop one whose <em>code</em> is hostile, and nothing running in that process could. What the coordinator gets is detection with attribution, which is what makes revocation mean something.</li>
+    <li><strong>An agent that under-declares is not caught.</strong> Enforcement acts on what an agent said it needs. Declaring less passes.</li>
     <li><strong>Sequential execution only.</strong> No parallel fan-out with synthesis.</li>
     <li><strong>No cost or token budget abstraction.</strong> Negotiation and renegotiation are bounded by round count, not spend.</li>
     <li><strong>Adoption.</strong> One production lineage, no external users yet.</li>
