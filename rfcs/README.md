@@ -165,7 +165,9 @@ RFCs are evaluated on:
 
 ## Currently Open RFCs
 
-*No RFCs are currently open for discussion.*
+| RFC | Title | Status |
+|-----|-------|--------|
+| [0004](0004-intent-terms.md) | Intent Terms | Draft |
 
 ---
 
