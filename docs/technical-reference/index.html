@@ -1,0 +1,840 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Liquid Interfaces — Technical Reference</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;1,6..72,400&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+:root{
+  --ink:#14161C;
+  --ink-soft:#3A4050;
+  --muted:#666E80;
+  --paper:#FCFCFD;
+  --surface:#F3F5F8;
+  --surface-2:#E9EDF3;
+  --rule:#D9DEE7;
+  --accent:#0E6E78;
+  --accent-soft:#E2F0F1;
+  --deny:#A8261E;
+  --deny-soft:#FBEBE9;
+  --warn:#8A5A00;
+  --warn-soft:#FBF2E0;
+  --measure:42rem;
+  --prose:34rem;
+}
+
+@page{ size:A4; margin:20mm 18mm 20mm 18mm; }
+
+*{box-sizing:border-box;}
+html{font-size:10.5pt;}
+body{
+  margin:0;
+  background:var(--paper);
+  color:var(--ink);
+  font-family:"IBM Plex Sans",system-ui,-apple-system,"Segoe UI",sans-serif;
+  line-height:1.54;
+  -webkit-font-smoothing:antialiased;
+}
+.doc{max-width:var(--measure);margin:0 auto;padding:0 0 3rem;}
+/* Running text keeps a comfortable ~68 characters; tables, code and
+   figures take the full column, which is what they need. */
+p,ul,ol,.lead,.toc,blockquote{max-width:var(--prose);}
+.callout p,.objection p,.fig figcaption,td p{max-width:none;}
+p{orphans:2;widows:2;}
+
+/* ---------- typography ---------- */
+h1,h2,h3,h4{font-family:Newsreader,Georgia,"Times New Roman",serif;font-weight:600;text-wrap:balance;color:var(--ink);}
+/* A heading stranded at the foot of a page, with its content overleaf,
+   is the classic print defect. Keep each one with what follows it. */
+h2,h3,h4{break-after:avoid;break-inside:avoid;}
+h3 + p,h4 + p,h3 + ul,h3 + ol{break-before:avoid;}
+h1{font-size:2.5rem;line-height:1.12;letter-spacing:-.015em;margin:0 0 .6rem;}
+h2{font-size:1.55rem;line-height:1.2;margin:0 0 .9rem;letter-spacing:-.01em;}
+h3{font-size:1.12rem;line-height:1.3;margin:1.45rem 0 .4rem;}
+h4{font-size:1rem;font-family:"IBM Plex Sans",sans-serif;font-weight:600;margin:1.4rem 0 .35rem;}
+p{margin:0 0 .68rem;}
+strong{font-weight:600;}
+em{font-style:italic;}
+a{color:var(--accent);text-decoration:none;border-bottom:1px solid var(--accent-soft);}
+code{font-family:"IBM Plex Mono",ui-monospace,monospace;font-size:.86em;background:var(--surface);
+     padding:.08em .34em;border-radius:3px;border:1px solid var(--surface-2);}
+.lead{font-size:1.06rem;color:var(--ink-soft);}
+
+/* ---------- cover ---------- */
+.cover{height:247mm;display:flex;flex-direction:column;justify-content:space-between;
+       break-after:page;padding-top:8mm;}
+.cover .mark{font-family:"IBM Plex Mono",monospace;font-size:.7rem;letter-spacing:.16em;
+             text-transform:uppercase;color:var(--accent);}
+.cover h1{font-size:3.4rem;margin:.4rem 0 0;}
+.cover .sub{font-family:Newsreader,serif;font-size:1.5rem;font-style:italic;color:var(--muted);
+            margin:.2rem 0 0;line-height:1.3;}
+.cover .thesis{border-left:2px solid var(--accent);padding-left:1rem;margin:2.2rem 0 0;
+               font-size:1.02rem;color:var(--ink-soft);max-width:28rem;}
+.cover-meta{display:grid;grid-template-columns:1fr 1fr;gap:.5rem 1.5rem;
+            border-top:1px solid var(--rule);padding-top:1rem;font-size:.8rem;}
+.cover-meta dt{font-family:"IBM Plex Mono",monospace;font-size:.66rem;letter-spacing:.1em;
+               text-transform:uppercase;color:var(--muted);margin-bottom:.1rem;}
+.cover-meta dd{margin:0 0 .55rem;font-weight:500;}
+
+/* ---------- structure ---------- */
+section{break-before:page;padding-top:.5rem;}
+section.cont{break-before:auto;}
+.sec-head{max-width:none;display:flex;gap:.85rem;align-items:baseline;border-bottom:1px solid var(--rule);
+          padding-bottom:.55rem;margin-bottom:1.4rem;}
+.sec-num{font-family:"IBM Plex Mono",monospace;font-size:.9rem;color:var(--accent);
+         font-weight:500;padding-top:.25rem;}
+.sec-head h2{margin:0;}
+
+/* ---------- toc ---------- */
+.toc{columns:1;font-size:.92rem;}
+.toc ol{list-style:none;margin:0;padding:0;counter-reset:t;}
+.toc li{display:flex;gap:.7rem;padding:.3rem 0;border-bottom:1px dotted var(--rule);counter-increment:t;}
+.toc li::before{content:counter(t);font-family:"IBM Plex Mono",monospace;color:var(--accent);
+                min-width:1.4rem;font-size:.82rem;padding-top:.12rem;}
+.toc .t{flex:1;}
+.toc .d{color:var(--muted);font-size:.83rem;display:block;}
+
+/* ---------- blocks ---------- */
+.callout{border:1px solid var(--rule);border-left:3px solid var(--accent);background:var(--surface);
+         padding:.75rem .9rem;margin:.9rem 0;break-inside:avoid;font-size:.95rem;}
+.callout .k{font-family:"IBM Plex Mono",monospace;font-size:.64rem;letter-spacing:.12em;
+            text-transform:uppercase;color:var(--accent);display:block;margin-bottom:.3rem;}
+.callout p:last-child{margin-bottom:0;}
+.callout.deny{border-left-color:var(--deny);background:var(--deny-soft);}
+.callout.deny .k{color:var(--deny);}
+.callout.warn{border-left-color:var(--warn);background:var(--warn-soft);}
+.callout.warn .k{color:var(--warn);}
+
+.objection{border:1px solid var(--rule);border-radius:2px;padding:0;margin:1.2rem 0;break-inside:avoid;}
+.objection .q{background:var(--surface-2);padding:.6rem .9rem;font-weight:600;font-size:.97rem;
+              border-bottom:1px solid var(--rule);}
+.objection .q::before{content:"“";font-family:Newsreader,serif;color:var(--muted);}
+.objection .q::after{content:"”";font-family:Newsreader,serif;color:var(--muted);}
+.objection .a{padding:.75rem .9rem .3rem;font-size:.94rem;}
+
+pre{background:var(--surface);border:1px solid var(--surface-2);border-radius:3px;
+    padding:.75rem .9rem;overflow-x:auto;margin:.9rem 0;break-inside:avoid;
+    font-family:"IBM Plex Mono",monospace;font-size:.72rem;line-height:1.55;color:var(--ink-soft);}
+pre code{background:none;border:none;padding:0;font-size:inherit;}
+.c-key{color:var(--accent);}
+.c-str{color:#7A3E9D;}
+.c-com{color:var(--muted);font-style:italic;}
+.c-num{color:var(--deny);}
+
+table{width:100%;border-collapse:collapse;margin:1rem 0;font-size:.86rem;break-inside:avoid;}
+th{text-align:left;font-family:"IBM Plex Mono",monospace;font-size:.66rem;letter-spacing:.09em;
+   text-transform:uppercase;color:var(--muted);font-weight:500;
+   border-bottom:1.5px solid var(--rule);padding:.35rem .5rem .35rem 0;vertical-align:bottom;}
+td{padding:.42rem .5rem .42rem 0;border-bottom:1px solid var(--rule);vertical-align:top;}
+td:last-child,th:last-child{padding-right:0;}
+tbody tr:last-child td{border-bottom:none;}
+.tbl-scroll{overflow-x:auto;}
+.num{font-variant-numeric:tabular-nums;}
+
+ul,ol{margin:0 0 .9rem;padding-left:1.15rem;}
+li{margin-bottom:.22rem;}
+li::marker{color:var(--muted);}
+
+.fig{margin:1.3rem 0;break-inside:avoid;}
+.fig svg{width:100%;height:auto;display:block;}
+.fig figcaption{font-size:.76rem;color:var(--muted);margin-top:.5rem;
+                padding-top:.4rem;border-top:1px solid var(--rule);}
+.fig figcaption b{color:var(--ink-soft);font-weight:600;}
+
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:.6rem;margin:1.2rem 0;break-inside:avoid;}
+.stat{border:1px solid var(--rule);padding:.6rem .7rem;background:var(--surface);}
+.stat .v{font-family:Newsreader,serif;font-size:1.5rem;font-weight:600;line-height:1;color:var(--accent);}
+.stat .l{font-size:.7rem;color:var(--muted);margin-top:.25rem;line-height:1.35;}
+
+.pill{display:inline-block;font-family:"IBM Plex Mono",monospace;font-size:.68rem;
+      padding:.1em .45em;border-radius:2px;background:var(--accent-soft);color:var(--accent);
+      border:1px solid rgba(14,110,120,.2);}
+.pill.deny{background:var(--deny-soft);color:var(--deny);border-color:rgba(168,38,30,.2);}
+
+.kicker{font-family:"IBM Plex Mono",monospace;font-size:.66rem;letter-spacing:.12em;
+        text-transform:uppercase;color:var(--muted);margin:1.8rem 0 .4rem;}
+hr{border:none;border-top:1px solid var(--rule);margin:1.6rem 0;}
+.footnote{font-size:.78rem;color:var(--muted);border-top:1px solid var(--rule);
+          padding-top:.5rem;margin-top:1.4rem;break-inside:avoid;}
+.footnote p{max-width:none;}
+.stats,.objection,.fig,table,pre{break-inside:avoid;}
+</style>
+</head>
+<body>
+<div class="doc">
+
+<!-- ============ COVER ============ -->
+<div class="cover">
+  <div>
+    <div class="mark">Technical Reference · LIP 0.2.0</div>
+    <h1>Liquid Interfaces</h1>
+    <p class="sub">A protocol for agent systems where the interface is an event, not an artifact</p>
+    <div class="thesis">
+      <p>Integration has always assumed that System&nbsp;A must know, in advance and to the byte, what System&nbsp;B expects. Autonomous agents break that assumption from both ends. Liquid Interfaces removes form as a precondition for interaction, and replaces it with intent, negotiation, and dissolution.</p>
+    </div>
+  </div>
+
+  <div>
+    <dl class="cover-meta">
+      <div><dt>Protocol</dt><dd>LIP 0.2.0</dd></div>
+      <div><dt>Reference implementation</dt><dd>agentic-bus 0.2.0</dd></div>
+      <div><dt>Governance model</dt><dd>IBAC — Intent-Based Access Control</dd></div>
+      <div><dt>Specification</dt><dd>github.com/draiven-io/liquid-interfaces</dd></div>
+      <div><dt>Paper</dt><dd>arXiv:2601.21993</dd></div>
+      <div><dt>Licence</dt><dd>Apache-2.0 / MIT</dd></div>
+    </dl>
+  </div>
+</div>
+
+<!-- ============ TOC ============ -->
+<section class="cont">
+  <div class="sec-head"><span class="sec-num">§</span><h2>Contents</h2></div>
+  <nav class="toc">
+    <ol>
+      <li><span class="t">The problem it solves<span class="d">Why static contracts fail against probabilistic callers</span></span></li>
+      <li><span class="t">The protocol<span class="d">Envelope, ten performatives, lifecycle</span></span></li>
+      <li><span class="t">Dissolution and the anti-debt principle<span class="d">The part that is genuinely unusual</span></span></li>
+      <li><span class="t">IBAC — Intent-Based Access Control<span class="d">Authorising the why, not the endpoint</span></span></li>
+      <li><span class="t">agentic-bus<span class="d">The reference implementation</span></span></li>
+      <li><span class="t">Evidence<span class="d">What has actually been demonstrated</span></span></li>
+      <li><span class="t">Where LIP sits<span class="d">MCP, A2A, ACP — layering rather than competing</span></span></li>
+      <li><span class="t">Objections, answered<span class="d">The hard questions, with honest answers</span></span></li>
+      <li><span class="t">Current state<span class="d">Shipped, open, and known gaps</span></span></li>
+    </ol>
+  </nav>
+
+  <div class="callout">
+    <span class="k">How to use this document</span>
+    <p>Sections 1–4 are the argument. Sections 5–7 are the evidence. Section 8 is what to say when someone pushes back, including the objections that are <em>correct</em>. Every number in this document was read from the source at the time of writing rather than recalled.</p>
+  </div>
+</section>
+
+<!-- ============ 1 ============ -->
+<section>
+  <div class="sec-head"><span class="sec-num">01</span><h2>The problem it solves</h2></div>
+
+  <p class="lead">The history of integration is the history of imposing predictability. RPC, SOAP, REST, GraphQL — different syntax, one premise: the caller must know the callee's shape in advance, exactly.</p>
+
+  <p>That premise held because callers were deterministic programs written by people who could read documentation. It stops holding when the caller is an autonomous agent, because the two sides now disagree about what an interaction <em>is</em>.</p>
+
+  <div class="tbl-scroll">
+  <table>
+    <thead><tr><th style="width:50%">The agent</th><th>The API</th></tr></thead>
+    <tbody>
+      <tr><td>Operates probabilistically</td><td>Operates deterministically</td></tr>
+      <tr><td>Interprets natural language</td><td>Requires rigid syntax</td></tr>
+      <tr><td>Adapts to ambiguous context</td><td>Demands a fixed schema</td></tr>
+      <tr><td>Pursues goals — <em>“reduce logistics cost”</em></td><td>Executes functions — <code>POST /orders/v1</code></td></tr>
+    </tbody>
+  </table>
+  </div>
+
+  <p>The industry's answer has been to translate: hand-written connectors, tool descriptions, function-calling schemas. That works, and it produces a specific kind of debt. Every integration is a permanent artefact someone maintains. Every schema change is a breaking change somewhere. The cost does not scale with value delivered; it scales with the <em>number of pairs</em> of things that talk.</p>
+
+  <h3>The observation LIP starts from</h3>
+
+  <p>When two agents collaborate, the interface between them exists for the duration of one interaction and then has no further purpose. Persisting it — as a connector, a schema, a client library — is not free. It is the thing you will migrate later.</p>
+
+  <div class="callout">
+    <span class="k">The core claim</span>
+    <p>If an interface only needs to exist while an interaction is happening, then <strong>making it durable is a cost with no corresponding benefit</strong>. Liquid Interfaces makes the interface ephemeral by construction: it is negotiated when needed and dissolved when finished, leaving nothing to maintain.</p>
+  </div>
+
+  <p>This is not an argument that types are bad or that validation is optional. It is an argument about <em>when</em> the contract is established. LIP establishes it at interaction time, from what the participants declare about themselves, rather than at design time from what someone anticipated.</p>
+</section>
+
+<!-- ============ 2 ============ -->
+<section>
+  <div class="sec-head"><span class="sec-num">02</span><h2>The protocol</h2></div>
+
+  <p class="lead">LIP is a message protocol. Every message is a JSON envelope with a performative — an act that changes the state of an interaction. The set of performatives is closed.</p>
+
+  <h3>2.1 The envelope</h3>
+
+  <p>Identical for every message type. The payload varies; the frame does not.</p>
+
+<pre><code>{
+  <span class="c-key">"protocol_version"</span>: <span class="c-str">"0.2.0"</span>,
+  <span class="c-key">"message_id"</span>:       <span class="c-str">"0d6f2f1e-1b4a-4c62-9f6a-2c0f0c9a1d33"</span>,
+  <span class="c-key">"session_id"</span>:       <span class="c-str">"9d1f7c02-..."</span>,   <span class="c-com">// the interaction context</span>
+  <span class="c-key">"message_type"</span>:     <span class="c-str">"offer"</span>,          <span class="c-com">// the performative</span>
+  <span class="c-key">"timestamp"</span>:        <span class="c-str">"2026-08-22T14:48:55+00:00"</span>,
+  <span class="c-key">"sender"</span>: {
+    <span class="c-key">"kind"</span>: <span class="c-str">"agent"</span>,                    <span class="c-com">// requester | coordinator | agent</span>
+    <span class="c-key">"id"</span>:   <span class="c-str">"route-optimizer-01"</span>,
+    <span class="c-key">"oidc_subject"</span>: <span class="c-str">"..."</span>
+  },
+  <span class="c-key">"trace"</span>: { <span class="c-key">"trace_id"</span>: <span class="c-str">"..."</span>, <span class="c-key">"span_id"</span>: <span class="c-str">"..."</span> },
+  <span class="c-key">"payload"</span>: { <span class="c-com">/* shape determined by message_type */</span> }
+}</code></pre>
+
+  <div class="callout">
+    <span class="k">Why sender.id is not identity</span>
+    <p><code>sender.id</code> is written by the sender. It is a <em>claim</em>. A coordinator that authorises on it has authorised whatever the caller typed. Section 4.4 covers what LIP does instead.</p>
+  </div>
+
+  <h3>2.2 The ten performatives</h3>
+
+  <p>Closed by design. Adding one changes what the protocol means, which is what the RFC process exists for. In a typed implementation this becomes a finite union rather than a string, and the compiler enforces it.</p>
+
+  <div class="tbl-scroll">
+  <table>
+    <thead><tr><th style="width:22%">Performative</th><th style="width:34%">Direction</th><th>Effect</th></tr></thead>
+    <tbody>
+      <tr><td><code>register</code></td><td>Agent → Coordinator</td><td>Declares the agent and the capabilities it offers</td></tr>
+      <tr><td><code>registered</code></td><td>Coordinator → Agent</td><td>Admits or refuses that declaration, with a reason</td></tr>
+      <tr><td><code>intent</code></td><td>Requester → Coordinator<br>Coordinator → Agent</td><td>Articulates an objective; relayed to candidate agents</td></tr>
+      <tr><td><code>offer</code></td><td>Agent → Coordinator</td><td>Declares a capability relevant to the intent</td></tr>
+      <tr><td><code>accept</code></td><td>Coordinator → Agent</td><td>Signals negotiated agreement</td></tr>
+      <tr><td><code>reject</code></td><td>Coordinator → Agent</td><td>Structured refusal, with cause</td></tr>
+      <tr><td><code>execute</code></td><td>Coordinator → Agent</td><td>Authorises work under negotiated terms</td></tr>
+      <tr><td><code>complete</code></td><td>Agent → Coordinator</td><td>Terminates execution, successfully or not</td></tr>
+      <tr><td><code>dissolve</code></td><td>Coordinator → All</td><td>Invalidates the context; mandatory cleanup</td></tr>
+      <tr><td><code>event</code></td><td>Any → Any</td><td>Informational progress; changes no state</td></tr>
+    </tbody>
+  </table>
+  </div>
+
+  <h3>2.3 The lifecycle</h3>
+
+  <figure class="fig">
+    <svg viewBox="0 0 640 236" xmlns="http://www.w3.org/2000/svg" font-family="IBM Plex Sans, sans-serif">
+      <defs>
+        <marker id="ar" markerWidth="6.5" markerHeight="6.5" refX="5.6" refY="3.25" orient="auto">
+          <path d="M0,0 L6.5,3.25 L0,6.5 z" fill="#5A6070"/>
+        </marker>
+        <marker id="arR" markerWidth="6.5" markerHeight="6.5" refX="5.6" refY="3.25" orient="auto">
+          <path d="M0,0 L6.5,3.25 L0,6.5 z" fill="#A8261E"/>
+        </marker>
+      </defs>
+
+      <!-- phase band -->
+      <g font-family="IBM Plex Mono, monospace" font-size="8">
+        <rect x="86" y="4" width="74" height="15" fill="#E2F0F1"/>
+        <text x="123" y="14.5" fill="#0E6E78" text-anchor="middle">INTENT</text>
+        <rect x="164" y="4" width="84" height="15" fill="#E2F0F1"/>
+        <text x="206" y="14.5" fill="#0E6E78" text-anchor="middle">DISCOVERY</text>
+        <rect x="252" y="4" width="96" height="15" fill="#E2F0F1"/>
+        <text x="300" y="14.5" fill="#0E6E78" text-anchor="middle">NEGOTIATION</text>
+        <rect x="352" y="4" width="126" height="15" fill="#E2F0F1"/>
+        <text x="415" y="14.5" fill="#0E6E78" text-anchor="middle">EXECUTION</text>
+        <rect x="546" y="4" width="90" height="15" fill="#FBEBE9"/>
+        <text x="591" y="14.5" fill="#A8261E" text-anchor="middle">DISSOLUTION</text>
+      </g>
+
+      <!-- lanes -->
+      <g font-family="IBM Plex Mono, monospace" font-size="8.5">
+        <text x="0" y="58" fill="#666E80">REQUESTER</text>
+        <text x="0" y="130" fill="#0E6E78">COORDINATOR</text>
+        <text x="0" y="202" fill="#666E80">AGENTS</text>
+      </g>
+      <line x1="0" y1="66" x2="640" y2="66" stroke="#D9DEE7" stroke-width="1"/>
+      <line x1="0" y1="138" x2="640" y2="138" stroke="#D9DEE7" stroke-width="1"/>
+      <line x1="0" y1="210" x2="640" y2="210" stroke="#D9DEE7" stroke-width="1"/>
+
+      <!-- messages: requester(66) <-> coordinator(138) <-> agents(210) -->
+      <g stroke="#5A6070" stroke-width="1.1" marker-end="url(#ar)">
+        <line x1="96"  y1="70"  x2="96"  y2="132"/>
+        <line x1="176" y1="142" x2="176" y2="204"/>
+        <line x1="262" y1="206" x2="262" y2="144"/>
+        <line x1="344" y1="142" x2="344" y2="204"/>
+        <line x1="424" y1="142" x2="424" y2="204"/>
+        <line x1="506" y1="206" x2="506" y2="144"/>
+        <line x1="576" y1="134" x2="576" y2="72"/>
+      </g>
+      <line x1="620" y1="142" x2="620" y2="204" stroke="#A8261E" stroke-width="1.1"
+            stroke-dasharray="3 2.5" marker-end="url(#arR)"/>
+
+      <g font-size="9" fill="#14161C">
+        <text x="101" y="105">intent</text>
+        <text x="181" y="177">intent</text>
+        <text x="267" y="177">offer</text>
+        <text x="349" y="177">accept</text>
+        <text x="429" y="177">execute</text>
+        <text x="511" y="177">complete</text>
+        <text x="524" y="105" text-anchor="end">result</text>
+        <text x="614" y="228" fill="#A8261E" text-anchor="end">dissolve</text>
+      </g>
+    </svg>
+    <figcaption><b>Figure 1.</b> One interaction, end to end. The requester never names an agent, and no agent names another. Everything is mediated, which is what makes the interaction auditable and the participants substitutable.</figcaption>
+  </figure>
+
+  <h3>2.4 Registration is per connection</h3>
+
+  <p>An agent registers on <em>every</em> connection, including reconnections. The coordinator holds its capability registry against the live channel, so an agent that reconnects without registering is connected and undiscoverable — healthy to a process supervisor, absent from the bus.</p>
+
+  <p>This is the failure mode RFC 0001 was written to eliminate. Before it, agents registered by sending <code>complete</code> with the sentinel <code>session_id="__registration__"</code>; registration could not fail visibly, and an agent refused admission stayed connected believing it was live.</p>
+
+  <h3>2.5 Versioning</h3>
+
+  <p>Every message carries <code>protocol_version</code>. A message without one is treated as <code>0.1.0</code> — the last version predating the field — rather than as current. Compatibility is <strong>not symmetric</strong>, and saying so plainly matters more than the version number:</p>
+
+  <div class="tbl-scroll">
+  <table>
+    <thead><tr><th>Agent</th><th>Coordinator</th><th>Result</th></tr></thead>
+    <tbody>
+      <tr><td>0.2.0</td><td>0.2.0</td><td>Full handshake</td></tr>
+      <tr><td>0.1.0</td><td>0.2.0</td><td>Works — the deprecated form is still accepted</td></tr>
+      <tr><td>0.2.0</td><td>0.1.0</td><td><span class="pill deny">Agent never registers</span> — the coordinator ignores <code>register</code></td></tr>
+    </tbody>
+  </table>
+  </div>
+
+  <p><strong>Coordinators are upgraded before agents.</strong> This is the usual ordering for a client/server protocol, but it is a real operational constraint rather than a formality.</p>
+</section>
+
+<!-- ============ 3 ============ -->
+<section>
+  <div class="sec-head"><span class="sec-num">03</span><h2>Dissolution and the anti-debt principle</h2></div>
+
+  <p class="lead">This is the part of LIP that is genuinely unusual, and the part most worth defending, because it is where the protocol makes a claim no other agent protocol makes.</p>
+
+  <p>A conventional contract persists. That is its purpose: it is a promise about the future. The cost is that it must be maintained, versioned, deprecated and migrated — and it constrains interactions nobody has had yet.</p>
+
+  <p>A LIP contract is <strong>designed to dissolve</strong>. It has limited temporal validity, exists only inside a session, and is invalidated by <code>dissolve</code>, which triggers mandatory cleanup across every participant.</p>
+
+  <div class="callout">
+    <span class="k">Invariant II</span>
+    <p><strong>Nothing outlives the interaction that created it.</strong> When a session dissolves, the negotiated contract, the execution plan, the session memory and the agent bindings are all discarded. What remains is the audit record of what happened — deliberately not the machinery that made it happen.</p>
+  </div>
+
+  <h3>3.1 What this buys</h3>
+
+  <ul>
+    <li><strong>No connector inventory.</strong> Adding an agent means registering capabilities, not editing another agent.</li>
+    <li><strong>No breaking changes between agents.</strong> There is no persistent contract to break; the next negotiation reflects the current declarations.</li>
+    <li><strong>Bounded blast radius.</strong> An interaction that goes wrong is dissolved. It cannot leave a half-configured integration behind.</li>
+  </ul>
+
+  <h3>3.2 What it costs, honestly</h3>
+
+  <ul>
+    <li><strong>Every interaction pays negotiation cost.</strong> Discovery and planning are real work, and for a hot path called ten thousand times a second they are the wrong trade. LIP is for coordination, not for the inner loop.</li>
+    <li><strong>Reproducibility takes deliberate effort.</strong> If the plan is composed at runtime, "why did it do that" is answerable only if you recorded it. Hence the audit trail is not optional in the reference implementation.</li>
+  </ul>
+
+  <h3>3.3 Dissolution during execution</h3>
+
+  <p>An agent may have work in flight when <code>dissolve</code> arrives. The specification requires it to stop, and to <strong>not</strong> send <code>complete</code> afterwards: the interaction context the completion would report against no longer exists. Two conformant implementations behaving differently here is precisely the ambiguity a specification exists to prevent, so it is stated explicitly.</p>
+</section>
+
+<!-- ============ 4 ============ -->
+<section>
+  <div class="sec-head"><span class="sec-num">04</span><h2>IBAC — Intent-Based Access Control</h2></div>
+
+  <p class="lead">The strongest independent criticism of agent protocols is not that they are slow or immature. It is that they cannot express <em>purpose, delegation, revocation or provenance</em> — so authorisation stays at the endpoint while the decision that mattered was made somewhere else. IBAC is the answer to that criticism.</p>
+
+  <h3>4.1 Why RBAC and ABAC do not fit</h3>
+
+  <div class="tbl-scroll">
+  <table>
+    <thead><tr><th style="width:16%">Model</th><th style="width:38%">Authorises</th><th>Why it is insufficient here</th></tr></thead>
+    <tbody>
+      <tr><td><strong>RBAC</strong></td><td>A role calling an endpoint</td><td>An agent's role is stable; its <em>purpose</em> changes every request. The same agent legitimately reading customer records for a support query is exfiltrating when the purpose is different.</td></tr>
+      <tr><td><strong>ABAC</strong></td><td>Attributes of subject, object, environment</td><td>Closer — but the attribute that decides this case is <em>why</em>, and “why” is not an attribute of the subject or the object. It is a property of the interaction.</td></tr>
+      <tr><td><strong>IBAC</strong></td><td>The intent behind the request, at every stage of it</td><td>Evaluates the interaction rather than the call. The same endpoint, the same identity, the same data — different answers, because the purpose differs.</td></tr>
+    </tbody>
+  </table>
+  </div>
+
+  <h3>4.2 Five evaluation points</h3>
+
+  <p>A request is not judged once. It is judged five times, each against what is known by then — because what is knowable changes as the interaction proceeds.</p>
+
+  <figure class="fig">
+    <svg viewBox="0 0 640 132" xmlns="http://www.w3.org/2000/svg" font-family="IBM Plex Sans, sans-serif">
+      <line x1="14" y1="46" x2="626" y2="46" stroke="#D9DEE7" stroke-width="2"/>
+      <g font-size="9" font-family="IBM Plex Mono, monospace">
+        <circle cx="60" cy="46" r="7" fill="#0E6E78"/><text x="60" y="49.5" font-size="8" fill="#fff" text-anchor="middle">1</text>
+        <circle cx="196" cy="46" r="7" fill="#0E6E78"/><text x="196" y="49.5" font-size="8" fill="#fff" text-anchor="middle">2</text>
+        <circle cx="332" cy="46" r="7" fill="#0E6E78"/><text x="332" y="49.5" font-size="8" fill="#fff" text-anchor="middle">3</text>
+        <circle cx="462" cy="46" r="7" fill="#0E6E78"/><text x="462" y="49.5" font-size="8" fill="#fff" text-anchor="middle">4</text>
+        <circle cx="592" cy="46" r="7" fill="#0E6E78"/><text x="592" y="49.5" font-size="8" fill="#fff" text-anchor="middle">5</text>
+      </g>
+      <g font-size="9" fill="#14161C" text-anchor="middle" font-weight="500">
+        <text x="60" y="28">intent</text>
+        <text x="196" y="28">offer</text>
+        <text x="332" y="28">negotiation</text>
+        <text x="462" y="28">execution</text>
+        <text x="592" y="28">artifact</text>
+        <text x="60" y="40" font-size="0"> </text>
+      </g>
+      <g font-size="7.6" fill="#666E80" text-anchor="middle" font-family="IBM Plex Mono, monospace">
+        <text x="60" y="70">admission</text>
+        <text x="196" y="70">eligibility</text>
+        <text x="332" y="70">acceptance</text>
+        <text x="462" y="70">authorization</text>
+        <text x="592" y="70">emission</text>
+      </g>
+      <g font-size="8" fill="#5A6070" text-anchor="middle">
+        <text x="60" y="94">Should this be</text><text x="60" y="105">attempted at all?</text>
+        <text x="196" y="94">May this agent</text><text x="196" y="105">bid on it?</text>
+        <text x="332" y="94">Is this plan</text><text x="332" y="105">acceptable?</text>
+        <text x="462" y="94">May this step</text><text x="462" y="105">run now?</text>
+        <text x="592" y="94">May this leave</text><text x="592" y="105">the boundary?</text>
+      </g>
+    </svg>
+    <figcaption><b>Figure 2.</b> The same request, judged five times. Denial at point 1 is cheap and total; denial at point 5 is the last defence before data crosses a boundary.</figcaption>
+  </figure>
+
+  <h3>4.3 Three layers, ANDed</h3>
+
+  <p>Each evaluation runs three layers, and the <strong>strictest decision wins</strong>. The layers are combined, never short-circuited: any layer must be able to block what another approved, and that guarantee is worth nothing if one <code>ALLOW</code> ends the evaluation.</p>
+
+  <figure class="fig">
+    <svg viewBox="0 0 640 176" xmlns="http://www.w3.org/2000/svg" font-family="IBM Plex Sans, sans-serif">
+      <g>
+        <rect x="8" y="10" width="196" height="86" fill="#F3F5F8" stroke="#0E6E78" stroke-width="1.4"/>
+        <text x="20" y="30" font-size="10" font-weight="600" fill="#0E6E78" font-family="IBM Plex Mono, monospace">INVARIANT</text>
+        <text x="20" y="48" font-size="9" fill="#3A4050">Deterministic. Reads only</text>
+        <text x="20" y="60" font-size="9" fill="#3A4050">coordinator-derived facts.</text>
+        <text x="20" y="76" font-size="9" fill="#3A4050" font-style="italic">No model involved.</text>
+        <text x="20" y="90" font-size="8.4" fill="#666E80">Carries a guarantee.</text>
+      </g>
+      <g>
+        <rect x="222" y="10" width="196" height="86" fill="#F3F5F8" stroke="#0E6E78" stroke-width="1.4"/>
+        <text x="234" y="30" font-size="10" font-weight="600" fill="#0E6E78" font-family="IBM Plex Mono, monospace">GROUNDED</text>
+        <text x="234" y="48" font-size="9" fill="#3A4050">Explicit rules: scopes,</text>
+        <text x="234" y="60" font-size="9" fill="#3A4050">domains, agents, caps.</text>
+        <text x="234" y="76" font-size="9" fill="#3A4050" font-style="italic">No model involved.</text>
+        <text x="234" y="90" font-size="8.4" fill="#666E80">Administrator-authored.</text>
+      </g>
+      <g>
+        <rect x="436" y="10" width="196" height="86" fill="#FBF2E0" stroke="#8A5A00" stroke-width="1.4"/>
+        <text x="448" y="30" font-size="10" font-weight="600" fill="#8A5A00" font-family="IBM Plex Mono, monospace">SEMANTIC</text>
+        <text x="448" y="48" font-size="9" fill="#3A4050">Model judges whether the</text>
+        <text x="448" y="60" font-size="9" fill="#3A4050">purpose matches a rule.</text>
+        <text x="448" y="76" font-size="9" fill="#3A4050" font-style="italic">Can only tighten.</text>
+        <text x="448" y="90" font-size="8.4" fill="#666E80">Unreachable ⇒ DENY.</text>
+      </g>
+
+      <path d="M106,96 L106,124 L320,124" stroke="#666E80" stroke-width="1.1" fill="none"/>
+      <path d="M320,96 L320,124" stroke="#666E80" stroke-width="1.1" fill="none"/>
+      <path d="M534,96 L534,124 L320,124" stroke="#666E80" stroke-width="1.1" fill="none"/>
+      <path d="M320,124 L320,140" stroke="#666E80" stroke-width="1.1" fill="none" marker-end="url(#ar2)"/>
+      <defs><marker id="ar2" markerWidth="7" markerHeight="7" refX="6" refY="3.5" orient="auto">
+        <path d="M0,0 L7,3.5 L0,7 z" fill="#666E80"/></marker></defs>
+
+      <rect x="196" y="142" width="248" height="26" fill="#14161C"/>
+      <text x="320" y="159" font-size="10" fill="#FCFCFD" text-anchor="middle" font-family="IBM Plex Mono, monospace">min(DENY … ALLOW) — strictest wins</text>
+    </svg>
+    <figcaption><b>Figure 3.</b> Because the combiner takes the strictest outcome, <b>the model layer can only ever tighten a decision, never loosen one.</b> An LLM in this path cannot grant access that the deterministic layers withheld.</figcaption>
+  </figure>
+
+  <p>That property is worth stating precisely, because it is the answer to the most serious objection to putting a language model anywhere near authorisation. The precedence order is <code>DENY</code> → <code>REQUIRE_HUMAN_APPROVAL</code> → <code>ALLOW_WITH_SCOPE</code> → <code>ALLOW</code>, and the combiner selects the minimum. A compromised or confused model can refuse things it should have permitted. It cannot permit things it should have refused.</p>
+
+  <h3>4.4 Declared versus derived</h3>
+
+  <p>Every fact entering an IBAC evaluation is classified, and the classification decides which rules can carry a guarantee.</p>
+
+  <div class="tbl-scroll">
+  <table>
+    <thead><tr><th style="width:50%">Declared — the actor wrote it</th><th>Derived — the coordinator established it</th></tr></thead>
+    <tbody>
+      <tr>
+        <td><code>intent_text</code>, <code>purpose</code>, <code>context</code>, <code>claimed_agent_id</code></td>
+        <td><code>authenticated_subject</code>, <code>authenticated_agent_id</code>, <code>identity_verified</code>, <code>session_id</code>, <code>evaluation_point</code></td>
+      </tr>
+      <tr>
+        <td>Can be reworded until it passes. A rule reading only declared input is a heuristic, however well written.</td>
+        <td>Resolved from the authenticated connection and the coordinator's own state. Cannot be argued away by phrasing the request differently.</td>
+      </tr>
+    </tbody>
+  </table>
+  </div>
+
+  <div class="callout">
+    <span class="k">Why this distinction is load-bearing</span>
+    <p>The invariant layer reads <strong>only</strong> derived facts. That is what lets it carry a guarantee. A result is marked <code>relies_on_declared_input</code> when the deciding layer read something the actor asserted — so an operator can tell which of their controls are boundaries and which are merely good defaults.</p>
+    <p style="margin-top:.5rem">The concrete attack this closes: an agent putting a colleague's identifier in <code>sender.id</code>. The manifest compares the claim against the identity resolved from the connection, and impersonation becomes a detectable, attributable event rather than a successful one.</p>
+  </div>
+
+  <h3>4.5 Fail-closed</h3>
+
+  <div class="callout deny">
+    <span class="k">Policy</span>
+    <p><strong>An evaluation that did not happen is not permission.</strong> If the semantic layer cannot reach its model, the decision is <code>DENY</code> — not “fall back to the deterministic rules and continue”.</p>
+  </div>
+
+  <p>This is a deliberate posture with a real cost: a model outage stops work that would otherwise have been permitted. It is chosen because the alternative is worse, and because the alternative is what systems drift into by default. Fail-open authorisation is rarely designed; it accumulates, one exception handler at a time, and it is invisible until the day it matters.</p>
+
+  <h3>4.6 Bounded capabilities</h3>
+
+  <p>An approval that grants nothing specific has approved everything. When IBAC allows, it issues a <strong>capability</strong> — a bounded, expiring grant naming exactly what may be done.</p>
+
+  <div class="tbl-scroll">
+  <table>
+    <thead><tr><th style="width:26%">Property</th><th>Meaning</th></tr></thead>
+    <tbody>
+      <tr><td><code>principal</code></td><td>Who holds it — the authenticated subject, not a claimed id</td></tr>
+      <tr><td><code>scopes</code></td><td>Exactly what it permits; anything outside is denied</td></tr>
+      <tr><td><code>expires_at</code></td><td>Default TTL 3600s. An expired capability is refused on presentation</td></tr>
+      <tr><td><code>session</code></td><td>Bound to the interaction, and destroyed when it dissolves</td></tr>
+    </tbody>
+  </table>
+  </div>
+
+  <p>The sequence is: semantic authorisation decides <em>whether</em>; a capability records <em>what</em>; deterministic execution enforces it. The judgement is made once, by the layer able to reason about purpose, and everything downstream is a mechanical check.</p>
+</section>
+
+<!-- ============ 5 ============ -->
+<section>
+  <div class="sec-head"><span class="sec-num">05</span><h2>agentic-bus</h2></div>
+
+  <p class="lead">The reference implementation: a coordinator, an agent SDK, an admin API and a dashboard. Python 3.11+, Apache-licensed, published to PyPI.</p>
+
+  <div class="stats">
+    <div class="stat"><div class="v num">21.5k</div><div class="l">lines of implementation</div></div>
+    <div class="stat"><div class="v num">9.7k</div><div class="l">lines of tests</div></div>
+    <div class="stat"><div class="v num">595</div><div class="l">tests passing</div></div>
+  </div>
+
+  <h3>5.1 What the coordinator does</h3>
+
+  <ol>
+    <li><strong>Admission</strong> — authenticates the connection, checks the agent is neither rejected nor revoked, and verifies the credential is entitled to the claimed <code>agent_id</code>.</li>
+    <li><strong>Intent processing</strong> — admits or refuses the intent (IBAC point 1), then decomposes it into sub-intents.</li>
+    <li><strong>Discovery</strong> — semantic matching against the capability registry.</li>
+    <li><strong>Negotiation</strong> — collects offers, evaluates eligibility (point 2), composes a plan (point 3).</li>
+    <li><strong>Execution</strong> — authorises each step (point 4), dispatches, supervises, scores.</li>
+    <li><strong>Validation</strong> — optionally has a nominated agent validate the result, with bounded renegotiation.</li>
+    <li><strong>Dissolution</strong> — invalidates the context and archives the audit record.</li>
+  </ol>
+
+  <h3>5.2 Transport independence</h3>
+
+  <p>The coordination logic never touches the wire — it asks a transport for a peer and sends an envelope. Two transports ship:</p>
+
+  <div class="tbl-scroll">
+  <table>
+    <thead><tr><th style="width:30%">Transport</th><th>Use</th></tr></thead>
+    <tbody>
+      <tr><td><code>WSServer</code></td><td>Agents connect over WebSocket from anywhere — separate processes, containers, machines, languages.</td></tr>
+      <tr><td><code>LocalTransport</code></td><td>Agents attach in-process. No port, no socket, no serialisation. Lets the coordinator run as a <em>library</em> inside an application that already owns a process.</td></tr>
+    </tbody>
+  </table>
+  </div>
+
+  <p>Envelopes are deep-copied across the in-process boundary. A socket hands each side its own object for free; skipping the copy would let code pass locally and misbehave over a network, which is worse than having no local transport at all.</p>
+
+  <h3>5.3 Agent-side ergonomics</h3>
+
+<pre><code><span class="c-com"># Python</span>
+<span class="c-key">class</span> Weather(BaseAgent):
+    <span class="c-key">def</span> capabilities(self):
+        <span class="c-key">return</span> [AgentCapability(capability_id=<span class="c-str">"forecast"</span>,
+                                 required_scopes=[<span class="c-str">"weather:read"</span>])]
+
+    <span class="c-key">async def</span> execute_task(self, payload, context):
+        <span class="c-key">return</span> {<span class="c-str">"forecast"</span>: <span class="c-key">await</span> lookup(payload[<span class="c-str">"city"</span>])}
+
+<span class="c-key">await</span> Weather(agent_id=<span class="c-str">"weather-01"</span>).run_forever()</code></pre>
+
+  <p>That is the entire surface. There is no router to configure and no other agent to point at: the coordinator discovers <code>forecast</code> from the registration and addresses it when an intent calls for it. The SDK handles registration per connection, jittered reconnection, per-session cancellation, and refusing to execute before <code>execute</code> arrives.</p>
+
+  <h3>5.4 Security posture</h3>
+
+  <div class="tbl-scroll">
+  <table>
+    <thead><tr><th style="width:34%">Control</th><th>Behaviour</th></tr></thead>
+    <tbody>
+      <tr><td>Agent authentication</td><td>Bearer credential on the WebSocket upgrade. OIDC verification when <code>AGBUS_OIDC_ISSUER</code> is set; refused at handshake if missing or invalid.</td></tr>
+      <tr><td>Development mode</td><td>Admitted without a credential but carrying <em>no</em> identity, so <code>identity_verified</code> is false everywhere it matters.</td></tr>
+      <tr><td>Entitlement</td><td>An <code>agent_id</code> binds to the first authenticated subject that registers it. Only that subject may claim it afterwards; a connection can never overwrite a binding.</td></tr>
+      <tr><td>Revocation</td><td>Enforced in ephemeral mode too — revocation escapable by reconnecting differently is a suggestion.</td></tr>
+      <tr><td>Audit</td><td>Every coordinator decision is recorded with actor, target, severity and reason.</td></tr>
+    </tbody>
+  </table>
+  </div>
+</section>
+
+<!-- ============ 6 ============ -->
+<section>
+  <div class="sec-head"><span class="sec-num">06</span><h2>Evidence</h2></div>
+
+  <p class="lead">A specification is a claim. This section is what has actually been demonstrated, and it is the material worth leading with in a technical argument.</p>
+
+  <h3>6.1 An independent implementation, from the document alone</h3>
+
+  <p>A TypeScript agent client was written from the specification and the published JSON Schemas, <strong>without reference to the Python implementation</strong>. That constraint is the point: anything the document leaves out shows up as a guess.</p>
+
+  <p>Result: <strong>fully conformant, zero advisory warnings</strong>, in roughly 300 lines over one runtime dependency. The exercise also surfaced four gaps, three of which were genuine defects now fixed in the specification:</p>
+
+  <ol>
+    <li><strong>How a credential is carried was undefined.</strong> §12 required authentication and the envelope had <code>oidc_subject</code>, but nothing said how a token reaches the coordinator. Now specified as <code>Authorization: Bearer</code> on the upgrade request.</li>
+    <li><strong>That the coordinator relays <code>intent</code> to agents was only inferable</strong> from the fact that an agent could not otherwise know what to offer against. Now stated.</li>
+    <li><strong>Dissolution mid-execution was undefined</strong> — whether to still send <code>complete</code>. Two conformant implementations could have behaved differently. Now stated.</li>
+    <li><strong>An ordering trap in the phrasing.</strong> “An agent joins by sending <code>register</code> and waiting for <code>registered</code>” reads as <em>send, then wait</em> — which drops the acknowledgement that arrives in between. The specification now says an agent must be receiving before it registers.</li>
+  </ol>
+
+  <h3>6.2 A conformance suite</h3>
+
+  <p>Twelve graded requirements, protocol-only, so it does not care what language an agent is written in. MUST failures break conformance; SHOULD failures warn.</p>
+
+  <div class="tbl-scroll">
+  <table>
+    <thead><tr><th style="width:22%">Requirement</th><th style="width:12%">Level</th><th>Checks</th></tr></thead>
+    <tbody>
+      <tr><td><code>LIP-REG-001</code></td><td>MUST</td><td><code>register</code> is the first message on a connection</td></tr>
+      <tr><td><code>LIP-REG-002</code></td><td>MUST</td><td>The register payload carries an <code>agent_id</code> and validates</td></tr>
+      <tr><td><code>LIP-REG-003</code></td><td>SHOULD</td><td>At least one capability is declared</td></tr>
+      <tr><td><code>LIP-INT-001</code></td><td>MUST</td><td>A matching <code>intent</code> produces an <code>offer</code></td></tr>
+      <tr><td><code>LIP-EXE-001</code></td><td>MUST</td><td>No execution before <code>execute</code> arrives</td></tr>
+      <tr><td><code>LIP-EXE-002</code></td><td>MUST</td><td><code>complete</code> is emitted when execution ends</td></tr>
+      <tr><td><code>LIP-DIS-001</code></td><td>MUST</td><td>Work stops on <code>dissolve</code></td></tr>
+      <tr><td><code>LIP-MSG-001</code></td><td>MUST</td><td>Every message is a valid envelope</td></tr>
+      <tr><td><code>LIP-MSG-002</code></td><td>MUST</td><td>Each payload matches the schema for its type</td></tr>
+      <tr><td><code>LIP-MSG-003</code></td><td>MUST</td><td>Only defined performatives are used</td></tr>
+      <tr><td><code>LIP-VER-001</code></td><td>MUST</td><td>Every message carries a <code>protocol_version</code></td></tr>
+      <tr><td><code>LIP-ACK-001</code></td><td>SHOULD</td><td>Serving continues when <code>registered</code> never arrives</td></tr>
+    </tbody>
+  </table>
+  </div>
+
+  <div class="callout">
+    <span class="k">Why this matters more than the pass</span>
+    <p>The suite is also run against <em>deliberately broken</em> agents, each violating exactly the requirement it covers. A conformance suite everything passes certifies nothing.</p>
+  </div>
+
+  <h3>6.3 A working end-to-end run</h3>
+
+  <p>One sentence — <em>“a storm has closed the Port of Rotterdam; reroute our refrigerated pharmaceuticals from Hamburg to Madrid within five days, and confirm cold-chain warehouse space”</em> — decomposed into sub-intents, discovered four agents that were never wired to each other, collected and evaluated their offers, composed a six-step plan, paused at a human approval gate, executed, validated, scored each agent, and dissolved. Elapsed: <strong>47 seconds</strong>.</p>
+
+  <p>No agent in that run knew about any other. Adding a fifth would have required registering it, and editing nothing.</p>
+</section>
+
+<!-- ============ 7 ============ -->
+<section>
+  <div class="sec-head"><span class="sec-num">07</span><h2>Where LIP sits</h2></div>
+
+  <p class="lead">The most common misreading is that LIP competes with MCP or A2A. It does not, and arguing that it does is the fastest way to lose a technical audience.</p>
+
+  <div class="tbl-scroll">
+  <table>
+    <thead><tr><th style="width:16%">Protocol</th><th style="width:30%">Answers</th><th>Relationship to LIP</th></tr></thead>
+    <tbody>
+      <tr><td><strong>MCP</strong></td><td>How does a model call a tool?</td><td>Complementary and below. An MCP server is a capability an agent can offer. agentic-bus ships an MCP bridge for exactly this.</td></tr>
+      <tr><td><strong>A2A</strong></td><td>How do two agents exchange messages?</td><td>Complementary and below. A2A is transport and framing between peers; LIP is what the messages <em>mean</em> and who decides.</td></tr>
+      <tr><td><strong>ACP</strong></td><td>How are agents described and discovered?</td><td>Overlapping at discovery. LIP adds negotiation, authorisation and dissolution around it.</td></tr>
+      <tr><td><strong>LIP</strong></td><td>Who should do this, may they, under what terms, and what happens afterwards?</td><td>—</td></tr>
+    </tbody>
+  </table>
+  </div>
+
+  <div class="callout">
+    <span class="k">The position to argue</span>
+    <p>MCP won tools. A2A is winning messaging. Neither expresses <strong>purpose, delegation, revocation or provenance</strong> — and independent analysis of the agent-protocol landscape identifies exactly that gap. LIP is a governance and coordination layer that sits <em>above</em> them, not a replacement for either. The right posture is “we layer on A2A”, not “we compete with A2A”.</p>
+  </div>
+</section>
+
+<!-- ============ 8 ============ -->
+<section>
+  <div class="sec-head"><span class="sec-num">08</span><h2>Objections, answered</h2></div>
+
+  <p class="lead">Including the ones that are correct. A defence that has no concessions in it is not credible to the audience you most want to convince.</p>
+
+  <div class="objection">
+    <div class="q">This is a language model deciding access control. That is disqualifying.</div>
+    <div class="a">
+      <p>It would be, if the model could grant. It cannot. Decisions from three layers are combined by taking the <strong>strictest</strong>, and the two deterministic layers run regardless — one of which reads only coordinator-derived facts and never invokes a model at all. The semantic layer can turn <code>ALLOW</code> into <code>DENY</code>; the ordering makes the reverse impossible.</p>
+      <p>And when the model is unreachable, the answer is <code>DENY</code>, not “continue without it”.</p>
+    </div>
+  </div>
+
+  <div class="objection">
+    <div class="q">Without a fixed contract, what stops the system hallucinating one?</div>
+    <div class="a">
+      <p>Today, honestly: not enough. A plan is composed by a model over declared capabilities, and nothing yet requires every planned step to name a capability that was actually offered, or checks that an artifact matches the <code>output_schema</code> its offer promised.</p>
+      <p>This is a known gap with a proposal against it — <strong>RFC 0002, Capability Authority</strong> — which constrains composition to the capabilities admitted in this session, validates artifacts against their declared schema, and answers a violation with the valid alternatives. The authority is derived from this session's offers, held by nobody, and dissolved with the session: the interface stays ephemeral, it just stops being imaginary.</p>
+    </div>
+  </div>
+
+  <div class="objection">
+    <div class="q">Negotiating every interaction is far too slow.</div>
+    <div class="a">
+      <p>Correct, for the wrong workload. LIP is a coordination protocol, not a data path. Discovery, planning and semantic authorisation cost seconds, and no argument makes that acceptable in a hot loop called thousands of times a second.</p>
+      <p>It is the right trade when the alternative is a human deciding, or a connector being written. Use it where the work is coarse-grained and the coordination is the hard part — and call the deterministic path directly where it is not.</p>
+    </div>
+  </div>
+
+  <div class="objection">
+    <div class="q">If plans are composed at runtime, debugging is impossible.</div>
+    <div class="a">
+      <p>Only if nothing is recorded. Every decision is auditable: the intent, its decomposition and rationale, which agents were discovered and why, each offer, every IBAC evaluation with the layer that decided and its reason, each execution step with latency and score, and the dissolution. A completed session is reconstructible from its archive.</p>
+      <p>The honest form of this objection is different and worth conceding: <em>reproducibility</em> is harder than in a static system, because the same intent may produce a different plan tomorrow. Determinism was traded for adaptability deliberately.</p>
+    </div>
+  </div>
+
+  <div class="objection">
+    <div class="q">This is a workflow engine with extra steps.</div>
+    <div class="a">
+      <p>The distinguishing test is what happens when you add a participant. In a workflow engine, adding a step means editing the workflow — the topology is authored. Under LIP, an agent registers its capabilities and becomes discoverable; nothing else changes, and no existing agent is modified.</p>
+      <p>The second test is what happens when a step fails. A workflow retries or fails the run. A coordinator can renegotiate — bounded, three rounds — because the plan was never the authority; the intent was.</p>
+    </div>
+  </div>
+
+  <div class="objection">
+    <div class="q">Who maintains this? It looks like one company's internal protocol.</div>
+    <div class="a">
+      <p>Fair, and currently accurate. What exists to answer it: an open specification with an RFC process, published JSON Schemas with CI enforcing that implementation and schema cannot drift, a language-agnostic conformance suite, and two independent client implementations — one written from the document alone, precisely to prove the document is sufficient.</p>
+      <p>What does not yet exist is adoption outside its origin. That is the real gap, and it should be conceded rather than argued around.</p>
+    </div>
+  </div>
+
+  <div class="objection">
+    <div class="q">Ephemeral interfaces mean losing type safety.</div>
+    <div class="a">
+      <p>The performative set is closed and the envelope is schema-validated — in TypeScript <code>MessageType</code> is a finite union the compiler enforces, and payloads validate against published JSON Schemas on every message. What is <em>not</em> statically typed is the relationship between two agents, because that relationship did not exist until the interaction started.</p>
+      <p>The trade is real: static typing at the boundary, runtime validation across it.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 9 ============ -->
+<section>
+  <div class="sec-head"><span class="sec-num">09</span><h2>Current state</h2></div>
+
+  <h3>9.1 Shipped</h3>
+
+  <div class="tbl-scroll">
+  <table>
+    <thead><tr><th style="width:34%">Component</th><th style="width:18%">Version</th><th>Status</th></tr></thead>
+    <tbody>
+      <tr><td>LIP specification</td><td>0.2.0</td><td>Published, with RFC process</td></tr>
+      <tr><td>agentic-bus (Python)</td><td>0.2.0</td><td>Published on PyPI</td></tr>
+      <tr><td>JSON Schemas</td><td>0.2.0</td><td>Generated from the models; CI fails on drift</td></tr>
+      <tr><td>Conformance suite</td><td>—</td><td><code>agbus conformance</code>; 12 graded requirements</td></tr>
+      <tr><td>TypeScript client</td><td>0.2.0</td><td>In-repo and conformant; npm release pending</td></tr>
+      <tr><td>IBAC engine</td><td>—</td><td>Five points, three layers, fail-closed, bounded capabilities</td></tr>
+      <tr><td>Admin dashboard</td><td>—</td><td>Next.js; agents, IBAC, audit, history, negotiation view</td></tr>
+    </tbody>
+  </table>
+  </div>
+
+  <h3>9.2 Known gaps</h3>
+
+  <p>Stating these first is more persuasive than being asked about them.</p>
+
+  <ul>
+    <li><strong>No capability authority yet.</strong> Composition is not constrained to offered capabilities, and artifacts are not validated against declared schemas. RFC 0002 proposes the fix.</li>
+    <li><strong>Tenant isolation is not enforced on the coordination path.</strong> The data model has tenants; the registry is global and the envelope carries no tenant. Blocking for multi-customer deployments.</li>
+    <li><strong>Sequential execution only.</strong> No parallel fan-out with synthesis.</li>
+    <li><strong>No cost or token budget abstraction.</strong> Negotiation and renegotiation are bounded by round count, not spend.</li>
+    <li><strong>Adoption.</strong> One production lineage, no external users yet.</li>
+  </ul>
+
+  <h3>9.3 What would change the argument</h3>
+
+  <p>The strongest thing that could happen to this protocol is not another feature. It is a second organisation depending on it, because a framework with one user invents requirements while a framework with users discovers them. Everything in section 6 exists to make that step cheap for whoever takes it.</p>
+
+  <div class="footnote">
+    <p>Specification and RFCs: <strong>github.com/draiven-io/liquid-interfaces</strong> · Reference implementation: <strong>github.com/draiven-io/agentic-bus</strong> · <strong>liquidinterfaces.org</strong> · Paper: <strong>arXiv:2601.21993</strong></p>
+    <p style="margin-top:.4rem">Figures and metrics in this document were read from the source repositories at the time of writing. Where a claim is a proposal rather than shipped behaviour, it is marked as such.</p>
+  </div>
+</section>
+
+</div>
+</body>
+</html>

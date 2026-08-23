@@ -13,6 +13,7 @@ This repository hosts the core specifications, governance documents, and design 
 
 ## 📖 Links
 
+- **Technical reference (PDF)**: [19-page overview of LIP, IBAC and agentic-bus](docs/liquid-interfaces-technical-reference.pdf) — the argument, the evidence, and the objections answered
 - **Specifications**: [spec/](spec/)
 - **RFCs**: [rfcs/](rfcs/)
 - **Reference implementation**: [github.com/draiven-io/agentic-bus](https://github.com/draiven-io/agentic-bus)
