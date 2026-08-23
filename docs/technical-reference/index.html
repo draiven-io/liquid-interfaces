@@ -197,6 +197,7 @@ hr{border:none;border-top:1px solid var(--rule);margin:1.6rem 0;}
       <li><span class="t">The protocol<span class="d">Envelope, ten performatives, lifecycle</span></span></li>
       <li><span class="t">Dissolution and the anti-debt principle<span class="d">The part that is genuinely unusual</span></span></li>
       <li><span class="t">IBAC — Intent-Based Access Control<span class="d">Authorising the why, not the endpoint</span></span></li>
+      <li><span class="t">The authority chain<span class="d">Identity, tenant, vocabulary, grant, enforcement</span></span></li>
       <li><span class="t">agentic-bus<span class="d">The reference implementation</span></span></li>
       <li><span class="t">Evidence<span class="d">What has actually been demonstrated</span></span></li>
       <li><span class="t">Where LIP sits<span class="d">MCP, A2A, ACP — layering rather than competing</span></span></li>
@@ -583,14 +584,231 @@ hr{border:none;border-top:1px solid var(--rule);margin:1.6rem 0;}
 
 <!-- ============ 5 ============ -->
 <section>
-  <div class="sec-head"><span class="sec-num">05</span><h2>agentic-bus</h2></div>
+  <div class="sec-head"><span class="sec-num">05</span><h2>The authority chain</h2></div>
+
+  <p class="lead">IBAC decides whether a purpose is permitted. That leaves a second question it does not answer — <em>with whose authority, and bounded by what?</em> — and 0.3.0 is largely the answer to it.</p>
+
+  <p>Before 0.3.0 the honest description of this layer was: an agent declared the permissions it wanted, and the coordinator wrote them down. Nothing verified the connection, nothing bounded the agent by the requester it acted for, and a permission name was a free string nobody had a list of — so <code>carrier:qoute</code> registered exactly as successfully as <code>carrier:quote</code>, and every rule guarding that capability silently stopped applying.</p>
+
+  <figure class="fig">
+    <svg viewBox="0 0 640 200" xmlns="http://www.w3.org/2000/svg" font-family="IBM Plex Sans, sans-serif">
+      <defs>
+        <marker id="ar3" markerWidth="7" markerHeight="7" refX="6" refY="3.5" orient="auto">
+          <path d="M0,0 L7,3.5 L0,7 z" fill="#0E6E78"/>
+        </marker>
+      </defs>
+      <g font-size="9" font-family="IBM Plex Mono, monospace" fill="#0E6E78">
+        <rect x="0" y="10" width="118" height="34" fill="#E2F0F1"/>
+        <text x="59" y="25" text-anchor="middle">IDENTITY</text>
+        <text x="59" y="37" text-anchor="middle" font-size="7.6" fill="#5A6070">who connected</text>
+
+        <rect x="132" y="10" width="118" height="34" fill="#E2F0F1"/>
+        <text x="191" y="25" text-anchor="middle">TENANT</text>
+        <text x="191" y="37" text-anchor="middle" font-size="7.6" fill="#5A6070">what may be seen</text>
+
+        <rect x="264" y="10" width="118" height="34" fill="#E2F0F1"/>
+        <text x="323" y="25" text-anchor="middle">CATALOGUE</text>
+        <text x="323" y="37" text-anchor="middle" font-size="7.6" fill="#5A6070">what names exist</text>
+
+        <rect x="396" y="10" width="118" height="34" fill="#E2F0F1"/>
+        <text x="455" y="25" text-anchor="middle">BINDING</text>
+        <text x="455" y="37" text-anchor="middle" font-size="7.6" fill="#5A6070">what was granted</text>
+
+        <rect x="528" y="10" width="112" height="34" fill="#E2F0F1"/>
+        <text x="584" y="25" text-anchor="middle">GRANT</text>
+        <text x="584" y="37" text-anchor="middle" font-size="7.6" fill="#5A6070">this step</text>
+      </g>
+      <g stroke="#0E6E78" stroke-width="1.1" marker-end="url(#ar3)">
+        <line x1="118" y1="27" x2="128" y2="27"/>
+        <line x1="250" y1="27" x2="260" y2="27"/>
+        <line x1="382" y1="27" x2="392" y2="27"/>
+        <line x1="514" y1="27" x2="524" y2="27"/>
+      </g>
+
+      <line x1="0" y1="66" x2="640" y2="66" stroke="#D9DEE7"/>
+      <g font-size="8.4" fill="#3A4050">
+        <text x="0" y="84" font-weight="600">Derived</text>
+        <text x="0" y="99">The authenticated subject on the connection,</text>
+        <text x="0" y="112">and the tenants it belongs to. Never read from</text>
+        <text x="0" y="125">the envelope — a tenant a caller can write is a</text>
+        <text x="0" y="138">tenant a caller can choose.</text>
+
+        <text x="330" y="84" font-weight="600">Administered</text>
+        <text x="330" y="99">The catalogue of names this deployment</text>
+        <text x="330" y="112">recognises, and the bindings that say which</text>
+        <text x="330" y="125">capability holds which. Authored by a person,</text>
+        <text x="330" y="138">never by an agent having asked.</text>
+      </g>
+
+      <rect x="0" y="156" width="640" height="30" fill="#14161C"/>
+      <text x="320" y="175" font-size="9.5" fill="#FCFCFD" text-anchor="middle" font-family="IBM Plex Mono, monospace">an agent cannot exceed the person it acts for</text>
+    </svg>
+    <figcaption><b>Figure 4.</b> Five narrowings. The first two are facts about the connection; the next two are decisions a person made; the last is their intersection for one step.</figcaption>
+  </figure>
+
+  <h3>5.1 Identity — who is connecting</h3>
+
+  <p>LIP §12 requires agents to be authenticated before participating. Until 0.3.0 the reference implementation did not do it, in a way worth describing precisely because the shape recurs: a verifier was constructed and never called, an <code>auth_handler</code> parameter existed and was never passed, and the identity map was read in two places and assigned in none. Every part looked present.</p>
+
+  <p>A credential now rides on the WebSocket upgrade and is verified against the configured issuer. What it proves is deliberately narrow — <strong>who is connecting</strong>, not what they may do.</p>
+
+  <div class="callout">
+    <span class="k">Authentication is not entitlement</span>
+    <p>An agent that authenticates correctly and then registers under a colleague's <code>agent_id</code> has authenticated perfectly and impersonated anyway. So an <code>agent_id</code> binds to the first authenticated subject that claims it, and afterwards only that subject may. A connection can never overwrite a binding — otherwise the binding is self-issued, and worth nothing.</p>
+  </div>
+
+  <h3>5.2 Tenant — what may be seen at all</h3>
+
+  <p>The data model carried tenants from the beginning and the coordination path never consulted them. Discovery did this:</p>
+
+<pre><code>summaries = registry.capability_summaries()   <span class="c-com"># every agent, every tenant</span>
+result = <span class="c-key">await</span> chain.ainvoke({<span class="c-str">"capabilities"</span>: str(summaries), ...})</code></pre>
+
+  <p>Two failures, and the second is the one that gets overlooked. The model could <em>pick</em> another tenant's agent — and it <em>saw</em> them, which is disclosure whatever it then picked. A capability description names things: <em>“query ACME Corp's payroll database”</em> is a customer's name in another customer's prompt.</p>
+
+  <p>So the filter applies to discovery's <strong>input</strong>, before the summaries are assembled. Filtering the candidates afterwards would be too late.</p>
+
+  <div class="tbl-scroll">
+  <table>
+    <thead><tr><th style="width:44%">Assignment</th><th>Visibility</th></tr></thead>
+    <tbody>
+      <tr><td>Agent assigned to no tenant</td><td>Global — visible to everyone</td></tr>
+      <tr><td>Agent assigned to tenants</td><td>Visible only to requesters sharing one</td></tr>
+      <tr><td>Requester resolving to no tenant</td><td>Global agents only</td></tr>
+    </tbody>
+  </table>
+  </div>
+
+  <p>Tenancy switches on by <strong>assigning agents</strong>, not by setting a flag. A bus that never heard of tenants keeps working; one that uses them is isolated. The third row means an unidentified caller in a fully-assigned deployment sees nothing — the intended answer rather than an edge case.</p>
+
+  <h3>5.3 Vocabulary — what the names mean</h3>
+
+  <p>A scope name belongs to a <strong>deployment</strong>, not to an agent. Requiring an agent to declare <code>payments:write</code> requires its author to know that <em>this</em> organisation calls it that, so an agent built for one bus needs editing for the next — the per-pair coupling §3 exists to remove.</p>
+
+  <p>An agent therefore declares what it <em>does</em>; a coordinator decides what that requires:</p>
+
+<pre><code>AgentCapability(
+    capability_id=<span class="c-str">"carrier_rate_quote"</span>,
+    description=<span class="c-str">"Obtains and compares freight quotes from multiple carriers"</span>,
+)</code></pre>
+
+  <p><code>required_scopes</code> remains on the wire and its meaning changed: a <strong>request</strong>, recorded and surfaced to an administrator, never an authority.</p>
+
+  <div class="callout">
+    <span class="k">Refusal is how the vocabulary propagates</span>
+    <p>Vocabulary a coordinator does not recognise is refused <em>with the catalogue</em>. That answers the obvious question — <em>how does an agent discover which names exist?</em> — without a discovery endpoint the agent would have to be built against. An implementer learns by being corrected, at the moment they err, instead of from documentation that goes stale.</p>
+    <p style="margin-top:.5rem">It also converts the failure that motivated all of this. A misspelt scope used to register successfully into a protection gap; it now surfaces as a request, next to the correct spelling.</p>
+  </div>
+
+  <p>Matching is hierarchical: <code>payments:*</code> covers <code>payments:write</code>; <code>payments:write</code> covers only itself, because a grant is not widened by having children.</p>
+
+  <h3>5.4 Grant — the two empties</h3>
+
+  <p>Narrowing happens twice with opposite meanings for an empty bound, and the distinction is the single easiest thing to get wrong here.</p>
+
+  <div class="tbl-scroll">
+  <table>
+    <thead><tr><th style="width:22%">Bound</th><th style="width:28%">Empty means</th><th>Because</th></tr></thead>
+    <tbody>
+      <tr>
+        <td>Requester's credential</td>
+        <td><strong>no limit expressed</strong></td>
+        <td>A missing <code>scope</code> claim usually means the identity provider does not use scopes, not that its holder may do nothing. Reading absence as denial would refuse every caller whose IdP is configured differently, to protect nothing.</td>
+      </tr>
+      <tr>
+        <td>Administrator's binding</td>
+        <td><strong>nothing granted</strong></td>
+        <td>The absence of a decision is not permission to proceed. An unbound capability holds nothing, deliberately.</td>
+      </tr>
+    </tbody>
+  </table>
+  </div>
+
+  <p>They are separate functions rather than a parameter, so every call site must say which meaning it wants. Using the wrong one is not a subtle bug — it turns an unbound capability into an unrestricted one.</p>
+
+  <h3>5.5 Enforcement — and which attacker it stops</h3>
+
+  <p>A granted scope used to reach the agent and be ignored. Now work that a permission governs says so where the work happens:</p>
+
+<pre><code><span class="c-key">from</span> agentic_bus <span class="c-key">import</span> require_scope
+
+<span class="c-com">@tool</span>
+<span class="c-key">def</span> issue_refund(order_id: str) -&gt; str:
+    require_scope(<span class="c-str">"payments:refund"</span>)
+    ...</code></pre>
+
+  <p>A coordinator cannot police what runs inside an agent's process. That is where the trust boundary is, not a shortcoming to fix — so it is worth being exact about what this defends, because overstating it would be worse than not having it.</p>
+
+  <div class="callout deny">
+    <span class="k">Not a malicious agent binary</span>
+    <p>Code that controls the process can call anything and report anything. Nothing running in that process could stop it, and an attacker who controls an agent's code has already replaced everything this could have protected.</p>
+  </div>
+
+  <div class="callout">
+    <span class="k">Yes a compromised agent brain</span>
+    <p>Which is the realistic threat when a language model drives the agent. An injected prompt can persuade the model to call <code>send_email</code>; it cannot persuade the invocation path to skip the guard, because the guard is not in the model's control. <strong>The model chooses what to call. It does not choose whether the call is checked.</strong></p>
+  </div>
+
+  <h3>5.6 Reconciliation — detection, with attribution</h3>
+
+  <p>The completion reports <code>used_scopes</code> and <code>denied_scopes</code>, recorded by the invocation path rather than volunteered by the model, and the coordinator compares them against what it granted. Exceeding the grant is recorded as <code>scope.exceeded</code>, at critical severity, against the agent — so a pattern is visible across sessions rather than only within one.</p>
+
+  <p>A refused attempt is recorded too, and is the more interesting half: an agent that <em>tried</em> to refund and was stopped is a finding, where one that succeeded is a Tuesday.</p>
+
+  <div class="callout">
+    <span class="k">Why detection is worth building</span>
+    <p>This is detection, not prevention, and the difference is the point rather than an excuse. <strong>Attribution is what makes revocation mean something.</strong> A bus that can name the agent, the session and the scope can revoke that agent and know what it was doing; one that cannot has a revocation button that changes nothing it can describe.</p>
+  </div>
+
+  <h3>5.7 What an offer promises</h3>
+
+  <p>Every offer in this protocol carries an <code>output_schema</code>, and until 0.3.0 nothing had ever read one. An agent could promise <code>{"routes": [...]}</code>, deliver <code>{"result": "ok"}</code>, and the interaction would proceed — until the next step consumed the artifact and assumed a field that was not there. That is the expensive shape: the failure surfaces one or two hops from its cause, and debugging starts at the wrong agent.</p>
+
+  <p>Three outcomes are kept distinct, because collapsing them makes an audit trail claim more than it knows:</p>
+
+  <div class="tbl-scroll">
+  <table>
+    <thead><tr><th style="width:30%">Outcome</th><th>Meaning</th></tr></thead>
+    <tbody>
+      <tr><td>Checked and matched</td><td>The artifact is the shape its offer declared</td></tr>
+      <tr><td>Checked and violated</td><td><span class="pill deny">schema_violation</span> — named agent, named promise</td></tr>
+      <tr><td><strong>Nothing was promised</strong></td><td>No schema declared. <em>Not a pass</em> — nothing was verified</td></tr>
+    </tbody>
+  </table>
+  </div>
+
+  <p>An absent schema is explicitly not a failure. An agent that cannot describe its output is still useful, and demanding a schema from every agent would exclude the exploratory ones this protocol exists to accommodate. <strong>Silence is honest; a promise that is broken is not.</strong></p>
+
+  <h3>5.8 Postures</h3>
+
+  <p>Every guarantee above arrives switched off, and switches on by configuration rather than by a flag nobody sets. The reason is migration: turning enforcement on in a bus that has been running refuses work that used to pass, and an operator should be able to see that before it happens rather than during.</p>
+
+  <div class="tbl-scroll">
+  <table>
+    <thead><tr><th style="width:46%">Setting</th><th>Off (default)</th></tr></thead>
+    <tbody>
+      <tr><td><code>AGBUS_OIDC_ISSUER</code></td><td>Credentials are parsed but not cryptographically verified</td></tr>
+      <tr><td><code>AGBUS_REQUIRE_AGENT_AUTH</code></td><td>A peer without a credential is admitted, carrying <em>no</em> identity</td></tr>
+      <tr><td><code>AGBUS_SCOPE_CATALOGUE_ENFORCED</code></td><td>Unrecognised names are catalogued on sight, and warned about</td></tr>
+      <tr><td><code>AGBUS_SCOPE_ENFORCED</code></td><td>An ungranted step logs loudly and runs</td></tr>
+      <tr><td><code>AGBUS_ARTIFACT_VALIDATION_ENFORCED</code></td><td>A violation is recorded; the step stands</td></tr>
+    </tbody>
+  </table>
+  </div>
+
+  <p>Setting an issuer implies the others' intent and cannot be loosened back: a deployment that configured an identity provider did not mean <em>sometimes</em>.</p>
+</section>
+
+<!-- ============ 6 ============ -->
+<section>
+  <div class="sec-head"><span class="sec-num">06</span><h2>agentic-bus</h2></div>
 
   <p class="lead">The reference implementation: a coordinator, an agent SDK, an admin API and a dashboard. Python 3.11+, Apache-licensed, published to PyPI.</p>
 
   <div class="stats">
-    <div class="stat"><div class="v num">24k</div><div class="l">lines of implementation</div></div>
-    <div class="stat"><div class="v num">13k</div><div class="l">lines of tests</div></div>
-    <div class="stat"><div class="v num">740</div><div class="l">tests passing</div></div>
+    <div class="stat"><div class="v num">23.6k</div><div class="l">lines of implementation</div></div>
+    <div class="stat"><div class="v num">11.4k</div><div class="l">lines of tests</div></div>
+    <div class="stat"><div class="v num">741</div><div class="l">tests passing</div></div>
   </div>
 
   <h3>5.1 What the coordinator does</h3>
@@ -642,7 +860,9 @@ hr{border:none;border-top:1px solid var(--rule);margin:1.6rem 0;}
   <table>
     <thead><tr><th style="width:34%">Control</th><th>Behaviour</th></tr></thead>
     <tbody>
-      <tr><td>Agent authentication</td><td>Bearer credential on the WebSocket upgrade. OIDC verification when <code>AGBUS_OIDC_ISSUER</code> is set; refused at handshake if missing or invalid.</td></tr>
+      <tr><td>Agent authentication</td><td>Bearer credential on the WebSocket upgrade, verified against the configured issuer. See §5.1.</td></tr>
+      <tr><td>Tenant isolation</td><td>Applied to discovery's input, so another tenant's capability descriptions never enter a prompt. See §5.2.</td></tr>
+      <tr><td>Scope enforcement</td><td>Catalogued vocabulary, administrator-authored bindings, checked at the point of use, reconciled afterwards. See §5.3–5.6.</td></tr>
       <tr><td>Development mode</td><td>Admitted without a credential but carrying <em>no</em> identity, so <code>identity_verified</code> is false everywhere it matters.</td></tr>
       <tr><td>Entitlement</td><td>An <code>agent_id</code> binds to the first authenticated subject that registers it. Only that subject may claim it afterwards; a connection can never overwrite a binding.</td></tr>
       <tr><td>Revocation</td><td>Enforced in ephemeral mode too — revocation escapable by reconnecting differently is a suggestion.</td></tr>
@@ -652,9 +872,9 @@ hr{border:none;border-top:1px solid var(--rule);margin:1.6rem 0;}
   </div>
 </section>
 
-<!-- ============ 6 ============ -->
+<!-- ============ 7 ============ -->
 <section>
-  <div class="sec-head"><span class="sec-num">06</span><h2>Evidence</h2></div>
+  <div class="sec-head"><span class="sec-num">07</span><h2>Evidence</h2></div>
 
   <p class="lead">A specification is a claim. This section is what has actually been demonstrated, and it is the material worth leading with in a technical argument.</p>
 
@@ -705,11 +925,26 @@ hr{border:none;border-top:1px solid var(--rule);margin:1.6rem 0;}
   <p>One sentence — <em>“a storm has closed the Port of Rotterdam; reroute our refrigerated pharmaceuticals from Hamburg to Madrid within five days, and confirm cold-chain warehouse space”</em> — decomposed into sub-intents, discovered four agents that were never wired to each other, collected and evaluated their offers, composed a six-step plan, paused at a human approval gate, executed, validated, scored each agent, and dissolved. Elapsed: <strong>47 seconds</strong>.</p>
 
   <p>No agent in that run knew about any other. Adding a fifth would have required registering it, and editing nothing.</p>
+
+  <h3>7.4 What checking it actually found</h3>
+
+  <p>Worth listing, because a protocol's credibility rests less on what it claims than on what happened when someone checked. Each of these was found by building against the specification, and each is now closed:</p>
+
+  <ul>
+    <li>A specification gap in <strong>how a credential is carried</strong>, found by an independent implementation having to guess.</li>
+    <li>Agents were <strong>never authenticated</strong> on the bus path — a verifier constructed and never called, an identity map read and never written.</li>
+    <li>Registration performed <strong>no admission check</strong>, so a revoked agent could return by reconnecting.</li>
+    <li>The execution guard's scope comparison <strong>iterated an empty list</strong>, because its only call site omitted the argument.</li>
+    <li>A misspelt scope <strong>registered successfully</strong>, into a protection gap.</li>
+    <li>Discovery described <strong>every tenant's agents</strong> to a language model.</li>
+  </ul>
+
+  <p>Two were found by a conformance run, one by a test asserting a refusal rather than a success. That is the argument for both: a suite everything passes certifies nothing, and a check that looks present is not a check that runs.</p>
 </section>
 
-<!-- ============ 7 ============ -->
+<!-- ============ 8 ============ -->
 <section>
-  <div class="sec-head"><span class="sec-num">07</span><h2>Where LIP sits</h2></div>
+  <div class="sec-head"><span class="sec-num">08</span><h2>Where LIP sits</h2></div>
 
   <p class="lead">The most common misreading is that LIP competes with MCP or A2A. It does not, and arguing that it does is the fastest way to lose a technical audience.</p>
 
@@ -731,9 +966,9 @@ hr{border:none;border-top:1px solid var(--rule);margin:1.6rem 0;}
   </div>
 </section>
 
-<!-- ============ 8 ============ -->
+<!-- ============ 9 ============ -->
 <section>
-  <div class="sec-head"><span class="sec-num">08</span><h2>Objections, answered</h2></div>
+  <div class="sec-head"><span class="sec-num">09</span><h2>Objections, answered</h2></div>
 
   <p class="lead">Including the ones that are correct. A defence that has no concessions in it is not credible to the audience you most want to convince.</p>
 
@@ -746,10 +981,30 @@ hr{border:none;border-top:1px solid var(--rule);margin:1.6rem 0;}
   </div>
 
   <div class="objection">
+    <div class="q">Enforcement inside the agent is enforcement the agent can skip.</div>
+    <div class="a">
+      <p>Correct, and stated as such in the code rather than defended. A coordinator cannot police what runs inside a process it does not control — that is where the trust boundary is, and no design moves it.</p>
+      <p>What the distinction buys is worth being precise about. An attacker who controls an agent's <em>code</em> has already replaced everything the guard could have protected. An attacker who controls its <em>prompt</em> — the realistic case when a model drives the agent — has not: the model chooses what to call, and does not choose whether the call is checked or recorded. The completion's usage report therefore reflects what happened rather than what the agent would like to say happened.</p>
+      <p>Downstream, that is detection with attribution rather than prevention, and attribution is what makes revocation mean something.</p>
+    </div>
+  </div>
+
+  <div class="objection">
+    <div class="q">You have replaced API schemas with a permission catalogue. The contract just moved.</div>
+    <div class="a">
+      <p>Yes — and pretending otherwise would not survive a first reading. A deployment maintains a scope catalogue and a set of bindings, and those are artefacts someone owns.</p>
+      <p>The difference that matters is what they scale with. A schema inventory grows with the number of <em>pairs</em> of systems that talk; a permission catalogue grows with the deployment's own authorisation model, which is a list most organisations already keep in an identity provider. And it is reviewed once, at admission, rather than every time the other side changes shape.</p>
+      <p>Any defence of this protocol that claims contracts have disappeared is overselling it, and a senior engineer will find the seam in under a minute.</p>
+    </div>
+  </div>
+
+  <div class="objection">
     <div class="q">Without a fixed contract, what stops the system hallucinating one?</div>
     <div class="a">
-      <p>Today, honestly: not enough. A plan is composed by a model over declared capabilities, and nothing yet requires every planned step to name a capability that was actually offered, or checks that an artifact matches the <code>output_schema</code> its offer promised.</p>
-      <p>This is a known gap with a proposal against it — <strong>RFC 0002, Capability Authority</strong> — which constrains composition to the capabilities admitted in this session, validates artifacts against their declared schema, and answers a violation with the valid alternatives. The authority is derived from this session's offers, held by nobody, and dissolved with the session: the interface stays ephemeral, it just stops being imaginary.</p>
+      <p>Two things, and both were true until 0.3.0.</p>
+      <p><strong>An artifact could be any shape.</strong> Every offer carries an <code>output_schema</code> and nothing read one, so a promise and a delivery could differ freely. That is now checked, with three outcomes kept distinct — including <em>nothing was promised</em>, which is not a pass (§5.7).</p>
+      <p><strong>A plan could name a capability nobody offered</strong> — in a coordinator that composes with a model. This is a correction I had to make to my own proposal: this one does not. <code>compose_offers</code> builds each step by reading fields off an accepted offer, so its steps reference real capabilities by construction, and the only model in that path <em>explains</em> the plan rather than producing it. The requirement in RFC 0002 stands as a constraint on coordinators that take the freedom the specification allows.</p>
+      <p>The general answer is the same in both cases: <strong>self-declared vocabulary is not a fact until it has been admitted.</strong> RFC 0002 applies that to what an agent produces; RFC 0003 to what it asks for.</p>
     </div>
   </div>
 
@@ -794,9 +1049,9 @@ hr{border:none;border-top:1px solid var(--rule);margin:1.6rem 0;}
   </div>
 </section>
 
-<!-- ============ 9 ============ -->
+<!-- ============ 10 ============ -->
 <section>
-  <div class="sec-head"><span class="sec-num">09</span><h2>Current state</h2></div>
+  <div class="sec-head"><span class="sec-num">10</span><h2>Current state</h2></div>
 
   <h3>9.1 Shipped</h3>
 
@@ -832,7 +1087,7 @@ hr{border:none;border-top:1px solid var(--rule);margin:1.6rem 0;}
 
   <h3>9.3 What would change the argument</h3>
 
-  <p>The strongest thing that could happen to this protocol is not another feature. It is a second organisation depending on it, because a framework with one user invents requirements while a framework with users discovers them. Everything in section 6 exists to make that step cheap for whoever takes it.</p>
+  <p>The strongest thing that could happen to this protocol is not another feature. It is a second organisation depending on it, because a framework with one user invents requirements while a framework with users discovers them. Everything in section 7 exists to make that step cheap for whoever takes it.</p>
 
   <div class="footnote">
     <p>Specification and RFCs: <strong>github.com/draiven-io/liquid-interfaces</strong> · Reference implementation: <strong>github.com/draiven-io/agentic-bus</strong> · <strong>liquidinterfaces.org</strong> · Paper: <strong>arXiv:2601.21993</strong></p>
