@@ -1,0 +1,57 @@
+name: Docs
+
+on:
+  push:
+    branches: [main]
+    paths: ["docs/technical-reference/**", "package.json"]
+  pull_request:
+    paths: ["docs/technical-reference/**", "package.json"]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  reference:
+    name: Technical reference renders
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+
+      - run: npm ci
+      - run: npx playwright install --with-deps chromium
+
+      # The render script measures each webfont against its fallback and
+      # throws if any face fell back. That is the failure this job exists to
+      # catch: a silent fallback produces a PDF that looks correct to the
+      # machine that built it and wrong to everyone who opens it, and nothing
+      # else in the pipeline would notice.
+      - run: npm run docs:pdf
+
+      - name: The PDF must not be empty or truncated
+        run: |
+          python3 - <<'PY'
+          import pathlib, re, sys
+
+          pdf = pathlib.Path("docs/liquid-interfaces-technical-reference.pdf")
+          data = pdf.read_bytes()
+          # grep cannot count these reliably: the whole PDF is effectively one
+          # binary line, so -c reports lines and finds nothing useful.
+          pages = len(re.findall(rb"/Type\s*/Page[^s]", data))
+          print(f"bytes={len(data)} pages={pages}")
+
+          if len(data) < 100_000:
+              sys.exit(f"::error::{pdf} is {len(data)} bytes — the render produced almost nothing")
+          if pages < 10:
+              sys.exit(f"::error::{pdf} has {pages} pages — expected the full reference")
+          PY
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: technical-reference
+          path: docs/liquid-interfaces-technical-reference.pdf
