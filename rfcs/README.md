@@ -169,6 +169,7 @@ RFCs are evaluated on:
 |-----|-------|--------|
 | [0001](0001-register-performative.md) | The `register` Performative | Draft |
 | [0002](0002-capability-authority.md) | Capability Authority | Draft |
+| [0003](0003-scope-vocabulary.md) | Scope Vocabulary and Admission | Draft |
 
 ---
 
