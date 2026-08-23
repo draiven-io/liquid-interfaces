@@ -39,13 +39,22 @@ complex. It is:
 
 Today the honest answer is *nothing*, and the gap has three distinct edges.
 
-**A plan may reference a capability that does not exist.** §7 matches intents
-to capabilities semantically, and a coordinator composes a plan from the
-result. Both steps are model-driven. A model that has read a hundred offers
-mentioning `route_optimization` will cheerfully emit a step for
-`route_optimisation`, or for a capability that a *different* agent offered in a
-*previous* session. The specification never requires the composed plan to be
-checked against what was actually offered.
+**A plan may reference a capability that does not exist** — in a coordinator
+that composes with a model. §7 matches intents to capabilities semantically,
+and the specification permits a coordinator to compose the resulting plan the
+same way. A model that has read a hundred offers mentioning
+`route_optimization` will cheerfully emit a step for `route_optimisation`, or
+for a capability a *different* agent offered in a *previous* session. Nothing
+in the specification requires the composed plan to be checked against what was
+actually offered.
+
+Worth stating precisely, because the first draft of this RFC did not: **the
+reference implementation is not exposed to this.** `compose_offers` builds
+each step by reading fields off an accepted offer, so its steps reference real
+capabilities by construction, and the only model in that path *explains* the
+plan rather than producing it. The requirement below is therefore a
+constraint on coordinators that take the freedom the specification allows —
+which is worth writing down before someone takes it, rather than after.
 
 **An artifact may not match its offer.** An agent's offer carries an
 `output_schema` in every implementation of this protocol. No implementation
@@ -60,8 +69,8 @@ consumed by an agent that assumes a field it will not find. The failure
 surfaces one or two hops from its cause, which is the most expensive place for
 a failure to surface.
 
-None of this is hypothetical. The failure mode is well documented in
-production systems built on this protocol: a model referencing a column that
+The second and third failures are not hypothetical, and the pattern behind all
+three is well documented in production systems built on this protocol: a model referencing a column that
 does not exist in the view it is querying, the query failing, a retry loop
 re-issuing the *same* invented reference, retries exhausting, and the user
 receiving a confidently-formatted answer of zero. The remedy found
@@ -411,4 +420,5 @@ is what actually fixes it; rejection is the backstop.
 
 | Date | Change |
 |------|--------|
+| 2026-08-23 | Corrected the first problem statement: the reference implementation composes plans deterministically from accepted offers, so the invented-capability risk applies to coordinators that compose with a model, not to this one. Artifact validation, the substantive half, is unaffected and is now implemented. |
 | 2026-08-22 | Initial draft |
