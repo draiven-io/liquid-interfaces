@@ -3,7 +3,7 @@
 > **Status**: Draft
 > **Author**: Dhiogo José Correa de Sá, @dhiogocorrea
 > **Created**: 2026-09-16
-> **Updated**: 2026-09-16
+> **Updated**: 2026-09-17
 
 ---
 
@@ -100,9 +100,10 @@ Four moving parts:
 1. A capability MAY publish an `input_schema` describing the parameters it
    needs.
 2. The `offer` carries it, so the coordinator sees it during composition.
-3. After the plan is composed, the coordinator composes each step's parameters
-   from the intent against that schema.
-4. What is composed is validated against the same schema before it is sent.
+3. At each step's dispatch, the coordinator composes that step's parameters
+   from the intent and from what earlier steps produced, against that schema.
+4. What is composed is validated against the same schema before it is sent,
+   and the agent validates what it receives against the same schema again.
 
 The agent's programming interface does not change. Composed parameters reach
 it the way context always has.
@@ -136,18 +137,57 @@ is a schema nothing can fill well.**
 
 #### Composition
 
-After the plan is composed and before it is dispatched, the coordinator
-composes each step's parameters. It has, for every step: the intent text, the
-capability's description, the `input_schema`, and what earlier steps produced.
+The coordinator composes a step's parameters **at dispatch** — immediately
+before that step's `execute` — not when the plan is composed. At plan time no
+step has run, so nothing produced by an earlier step can reach a later one;
+composing then leaves a consumer no way to be parameterised from a producer
+except by reaching into the producer's memory by name, which is the coupling
+this protocol exists to dissolve.
+
+At dispatch the coordinator has: the intent text, the capability's description,
+its `input_schema`, the artifacts earlier steps reported, and what earlier
+steps left in shared memory that *this* step may read.
 
 The composition is semantic and a language model is the expected mechanism.
 This RFC does not specify the prompt. It specifies what the result must
-satisfy.
+satisfy, and one thing about what the model is shown.
+
+#### Shapes, not data
+
+What earlier steps left in memory is shown to the composing model as
+**shapes** — `list[4] of {id, nome, email, criado_em}` — never as values. The
+model fills a parameter from memory by returning a **reference**, which the
+coordinator resolves deterministically before validation:
+
+```json
+{"$from": "<memory key>"}
+{"$from": "<memory key>", "$path": "a.b"}
+{"$from": "<memory key>", "$fields": {"dest": "src"}}
+```
+
+The model decides the mapping; code applies it to the data. This is the same
+split that keeps a dataset out of an agent's model context, applied to the
+coordinator's own model. A reference to a key this step was not granted is a
+composition violation, not an exception.
+
+This is also where two agents that never met are joined. The producer
+published the shape of what it made; the consumer published the shape of what
+it needs; neither named the other. The mapping between the two is computed
+here, for this interaction, and does not outlive it.
+
+#### Ordering
+
+Composition at dispatch presumes the steps run in an order in which a
+consumer follows its producers. A coordinator that decomposes an intent into
+sub-intents with dependencies SHOULD order the plan by those dependencies. The
+step set is authoritative and the order advisory: an ordering that drops,
+repeats or invents a step MUST be discarded in favour of the original order.
 
 #### Validation
 
 Composed parameters MUST be validated against the `input_schema` that produced
-them, before the `execute` is sent.
+them, after references are resolved and before the `execute` is sent — so what
+is checked is what the agent will receive.
 
 This mirrors RFC 0002 in the other direction, and for the same reason. An
 artifact that does not match its promised shape fails one or two hops from its
@@ -166,6 +206,25 @@ had before this RFC — and the failure is recorded.
 The alternative, dispatching what was composed anyway, is worse than composing
 nothing: the agent acts on a shape nobody validated, having been told it would
 receive one that was.
+
+#### On the agent
+
+The declared shape is the source of truth on both sides of the wire. An agent
+SHOULD validate the context it receives against its own published
+`input_schema` before acting on it, and report a mismatch as `invalid_input`,
+distinct from an execution error: the agent did not fail, it was handed a
+shape it never agreed to receive. The fields that failed SHOULD travel on the
+completion, so the composition upstream can be corrected rather than guessed
+at.
+
+This matters on one path in particular. When composition fails validation the
+step falls back to the requester's context, which nobody validated. There, the
+agent's own check is the only one.
+
+To know *which* of its capabilities a step executes, an agent needs the
+capability's own identifier on the `execute`. Reference coordinators send the
+session's IBAC capability in `capability_id`; the agent's own is sent as
+`agent_capability_id`.
 
 #### Precedence
 
@@ -198,6 +257,14 @@ An implementation claiming conformance:
   "Nobody published a shape" and "we composed and found nothing to fill" are
   different facts, and an audit trail that conflates them says more than it
   knows.
+- **MUST NOT** show the composing model the contents of shared memory. It is
+  shown shapes and answers with references; the coordinator resolves them.
+- **MUST** resolve references before validating, so the schema checks what
+  the agent will receive.
+- **SHOULD** order steps by the intent's decomposition, and **MUST NOT** let
+  that ordering change the step set.
+- An agent **SHOULD** validate its received context against its own
+  `input_schema` and report a mismatch as `invalid_input`.
 
 ### Integration
 
@@ -298,9 +365,13 @@ alone, and a coordinator that is compromised now knows more.
 - Is there a case for an agent **rejecting** composed parameters as
   semantically wrong while schema-valid, and what performative carries that?
   `reject` with a `renegotiation_hint` is the obvious candidate.
-- Where composition depends on an earlier step's result, parameters cannot be
-  composed before the plan starts. Does the plan carry *deferred* steps, or
-  does the coordinator compose progressively as results arrive?
+- ~~Where composition depends on an earlier step's result, parameters cannot
+  be composed before the plan starts.~~ Resolved: composition happens at
+  dispatch, progressively, as results arrive (see *Composition*).
+- With composition at dispatch, the plan the requester approves no longer
+  contains the parameters each step will run with. Whether approval should
+  cover them — and what it would mean to approve a mapping over shapes rather
+  than values — is open.
 
 ---
 
@@ -339,3 +410,4 @@ example improves any semantic task.
 | Date | Change |
 |------|--------|
 | 2026-09-16 | Initial draft |
+| 2026-09-17 | Composition moves to dispatch; shapes and references; ordering by decomposition; agent-side validation and `invalid_input`; `agent_capability_id` |
