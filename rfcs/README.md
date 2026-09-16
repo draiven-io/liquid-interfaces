@@ -168,6 +168,7 @@ RFCs are evaluated on:
 | RFC | Title | Status |
 |-----|-------|--------|
 | [0004](0004-intent-terms.md) | Intent Terms | Draft |
+| [0005](0005-step-inputs.md) | Step Inputs | Draft |
 
 ---
 
