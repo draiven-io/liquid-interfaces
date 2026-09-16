@@ -100,9 +100,10 @@ Four moving parts:
 1. A capability MAY publish an `input_schema` describing the parameters it
    needs.
 2. The `offer` carries it, so the coordinator sees it during composition.
-3. After the plan is composed, the coordinator composes each step's parameters
-   from the intent against that schema.
-4. What is composed is validated against the same schema before it is sent.
+3. At each step's dispatch, the coordinator composes that step's parameters
+   from the intent and from what earlier steps produced, against that schema.
+4. What is composed is validated against the same schema before it is sent,
+   and the agent validates what it receives against the same schema again.
 
 The agent's programming interface does not change. Composed parameters reach
 it the way context always has.
